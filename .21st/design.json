@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "project": {
+    "name": "website",
+    "productType": null,
+    "stack": [
+      "nextjs",
+      "react",
+      "tailwind-v4"
+    ]
+  },
+  "sources": {
+    "tokens": [
+      "src/app/globals.css"
+    ],
+    "components": [],
+    "assets": [
+      "public/brand"
+    ],
+    "instructions": [
+      "AGENTS.md",
+      "CLAUDE.md"
+    ]
+  },
+  "design": {
+    "colorMode": "light",
+    "colors": {
+      "--color-cream": {
+        "value": "#FDFCF6",
+        "source": "src/app/globals.css"
+      },
+      "--color-cream-2": {
+        "value": "#F5F0E6",
+        "source": "src/app/globals.css"
+      },
+      "--color-forest": {
+        "value": "#0F2B1D",
+        "source": "src/app/globals.css"
+      },
+      "--color-forest-light": {
+        "value": "#1A3D2E",
+        "source": "src/app/globals.css"
+      },
+      "--color-sage": {
+        "value": "#8EA48B",
+        "source": "src/app/globals.css"
+      },
+      "--color-terracotta": {
+        "value": "#C45A2E",
+        "source": "src/app/globals.css"
+      },
+      "--color-gold": {
+        "value": "#D4A574",
+        "source": "src/app/globals.css"
+      },
+      "--color-stone": {
+        "value": "#E8E0D0",
+        "source": "src/app/globals.css"
+      },
+      "--color-stone-dark": {
+        "value": "#9A9590",
+        "source": "src/app/globals.css"
+      },
+      "--color-primary": {
+        "value": "#0F2B1D",
+        "source": "src/app/globals.css"
+      },
+      "--color-primary-dark": {
+        "value": "#0A1F14",
+        "source": "src/app/globals.css"
+      },
+      "--color-on-primary": {
+        "value": "#FDFCF6",
+        "source": "src/app/globals.css"
+      },
+      "--color-secondary": {
+        "value": "#8EA48B",
+        "source": "src/app/globals.css"
+      },
+      "--color-on-secondary": {
+        "value": "#0F2B1D",
+        "source": "src/app/globals.css"
+      },
+      "--color-accent": {
+        "value": "#C45A2E",
+        "source": "src/app/globals.css"
+      },
+      "--color-on-accent": {
+        "value": "#FFFFFF",
+        "source": "src/app/globals.css"
+      },
+      "--color-background": {
+        "value": "#FDFCF6",
+        "source": "src/app/globals.css"
+      },
+      "--color-foreground": {
+        "value": "#0F2B1D",
+        "source": "src/app/globals.css"
+      },
+      "--color-card": {
+        "value": "#FFFFFF",
+        "source": "src/app/globals.css"
+      },
+      "--color-card-foreground": {
+        "value": "#0F2B1D",
+        "source": "src/app/globals.css"
+      },
+      "--color-muted": {
+        "value": "#F5F0E6",
+        "source": "src/app/globals.css"
+      },
+      "--color-muted-foreground": {
+        "value": "#6B7066",
+        "source": "src/app/globals.css"
+      },
+      "--color-border": {
+        "value": "#E8E0D0",
+        "source": "src/app/globals.css"
+      },
+      "--color-destructive": {
+        "value": "#C45A2E",
+        "source": "src/app/globals.css"
+      },
+      "--color-on-destructive": {
+        "value": "#FFFFFF",
+        "source": "src/app/globals.css"
+      },
+      "--color-ring": {
+        "value": "#0F2B1D",
+        "source": "src/app/globals.css"
+      }
+    },
+    "typography": {
+      "--font-display": {
+        "value": "\"Cormorant Garamond\", Georgia, serif",
+        "source": "src/app/globals.css"
+      },
+      "--font-sans": {
+        "value": "\"Instrument Sans\", ui-sans-serif, system-ui, sans-serif",
+        "source": "src/app/globals.css"
+      },
+      "--font-mono": {
+        "value": "\"JetBrains Mono\", monospace",
+        "source": "src/app/globals.css"
+      }
+    },
+    "spacing": {},
+    "radius": {},
+    "shadows": {},
+    "motion": {},
+    "density": "unknown"
+  },
+  "components": {
+    "installed": [],
+    "preferredPrimitives": [],
+    "patterns": []
+  },
+  "constraints": {
+    "must": [],
+    "avoid": []
+  },
+  "decisions": [],
+  "evidence": [
+    {
+      "fact": "design.colorMode:light",
+      "source": "src/app/globals.css"
+    },
+    {
+      "fact": "design.tokens",
+      "source": "src/app/globals.css"
+    },
+    {
+      "fact": "project.instructions",
+      "source": "AGENTS.md"
+    },
+    {
+      "fact": "project.instructions",
+      "source": "CLAUDE.md"
+    },
+    {
+      "fact": "project.stack:nextjs",
+      "source": "package.json"
+    },
+    {
+      "fact": "project.stack:react",
+      "source": "package.json"
+    },
+    {
+      "fact": "project.stack:tailwind-v4",
+      "source": "package.json"
+    }
+  ],
+  "generatedAt": "2026-09-06T13:11:23.941Z"
+}
