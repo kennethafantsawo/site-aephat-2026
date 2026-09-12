@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BadgeCheck, Lock } from "lucide-react";
 import { type Locale, getDictionary } from "@/lib/i18n";
 import type { CommentItem } from "@/modules/content/types";
 
@@ -76,13 +77,13 @@ export function CommentsModal({ locale, postId, postTitle, onClose }: CommentsMo
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-900">{c.authorName}</span>
                   {c.isVerifiedUser && (
-                    <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                      ✓ {locale === "fr" ? "Vérifié" : "Verified"}
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                      <BadgeCheck className="w-3 h-3" /> {locale === "fr" ? "Vérifié" : "Verified"}
                     </span>
                   )}
                   {c.visibility === "private" && (
-                    <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                      🔒 {locale === "fr" ? "Privé" : "Private"}
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                      <Lock className="w-3 h-3" /> {locale === "fr" ? "Privé" : "Private"}
                     </span>
                   )}
                 </div>

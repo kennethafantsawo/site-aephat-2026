@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { type Locale, getDictionary } from "@/lib/i18n";
 import type { Post } from "@/modules/content/types";
@@ -26,7 +26,7 @@ export default function AdminPostsPage() {
   const emptyPost: Post = {
     id: "", title: "", titleEn: "", content: "", contentEn: "",
     excerpt: "", excerptEn: "", status: "draft", authorId: "u1",
-    isDemo: false, likes: 0, commentCount: 0, createdAt: "", updatedAt: "",
+    images: [], isDemo: false, likes: 0, commentCount: 0, createdAt: "", updatedAt: "",
   };
 
   const handleSave = async (post: Post) => {
@@ -114,8 +114,11 @@ function PostForm({ post, polls, locale, onSave, onCancel }: {
       </div>
       <div><label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.excerpt_label}</label><input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" /></div>
       <div><label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.content_label}</label><textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" required /></div>
+      <PhotoManager
+        images={form.images && form.images.length ? form.images : form.imageUrl ? [form.imageUrl] : []}
+        onChange={(images) => setForm({ ...form, images, imageUrl: images[0] })}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.imageUrl_label}</label><input value={form.imageUrl || ""} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" /></div>
         <div><label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.status_label}</label>
           <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Post["status"] })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
             <option value="draft">Brouillon</option><option value="published">Publié</option><option value="scheduled">{t.admin.scheduled}</option>
@@ -138,5 +141,70 @@ function PostForm({ post, polls, locale, onSave, onCancel }: {
         <button type="submit" className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">{post.id ? t.admin.updatePost : t.admin.createPost}</button>
       </div>
     </form>
+  );
+}
+
+function PhotoManager({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
+  const [url, setUrl] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const addUrl = () => {
+    const u = url.trim();
+    if (!u) return;
+    onChange([...images, u]);
+    setUrl("");
+  };
+
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    Array.from(files).slice(0, 8 - images.length).forEach((f) => {
+      const rd = new FileReader();
+      rd.onload = () => onChange([...images, String(rd.result)]);
+      rd.readAsDataURL(f);
+    });
+  };
+
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= images.length) return;
+    const next = [...images];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50/60 p-4">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <label className="text-sm font-semibold text-gray-800">
+          Photos de la publication <span className="font-normal text-gray-500">({images.length}/8 — la 1ʳᵉ = couverture)</span>
+        </label>
+        <button type="button" onClick={() => fileRef.current?.click()} className="px-3 py-1.5 bg-[#101418] text-white text-xs font-bold rounded-full hover:bg-black">
+          + Ajouter depuis l'appareil
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+      </div>
+      <div className="flex gap-2 mt-3">
+        <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addUrl(); } }} placeholder="Coller une URL d'image puis Entrée..." className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" />
+        <button type="button" onClick={addUrl} className="px-3 py-2 bg-primary text-white text-xs font-bold rounded-md hover:bg-primary-dark">Ajouter</button>
+      </div>
+      {images.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3">
+          {images.map((src, i) => (
+            <div key={`${i}-${src.slice(0, 24)}`} className={`relative rounded-xl overflow-hidden border-2 bg-white ${i === 0 ? "border-[#1FA34A]" : "border-transparent"}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={`Photo ${i + 1}`} className="w-full h-28 object-cover" />
+              {i === 0 && <span className="absolute top-1.5 left-1.5 text-[10px] font-extrabold bg-[#1FA34A] text-white rounded-full px-2 py-0.5">Couverture</span>}
+              <div className="absolute bottom-1.5 right-1.5 flex gap-1">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="w-6 h-6 rounded-full bg-black/60 text-white text-xs disabled:opacity-30">‹</button>
+                <button type="button" onClick={() => move(i, 1)} disabled={i === images.length - 1} className="w-6 h-6 rounded-full bg-black/60 text-white text-xs disabled:opacity-30">›</button>
+                <button type="button" onClick={() => onChange(images.filter((_, x) => x !== i))} className="w-6 h-6 rounded-full bg-red-600 text-white text-xs">×</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400 mt-3">Aucune photo. Ajoutez jusqu'à 8 photos : elles s'afficheront en carrousel façon réseau social.</p>
+      )}
+    </div>
   );
 }

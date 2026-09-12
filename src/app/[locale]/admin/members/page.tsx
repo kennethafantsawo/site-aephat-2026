@@ -87,7 +87,7 @@ export default function AdminMembersPage() {
                 <td className="px-4 py-3">
                   {user.studentCardPhoto ? (
                     <a href={user.studentCardPhoto} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
-                      {locale === "fr" ? "Voir" : "View"} 📷
+                      {locale === "fr" ? "Voir la carte" : "View card"}
                     </a>
                   ) : (
                     <span className="text-xs text-gray-400">—</span>

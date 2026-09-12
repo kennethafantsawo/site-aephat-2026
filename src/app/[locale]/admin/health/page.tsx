@@ -33,11 +33,11 @@ export default function AdminHealthPage() {
 
   const importFeeds = async () => {
     const d = await run({ action: "import_feeds", importedBy: "u1" }, "rss");
-    alert(d.imported > 0 ? `✅ ${d.imported} article(s) RSS importé(s)` : "Aucun nouvel article RSS");
+    alert(d.imported > 0 ? `${d.imported} article(s) RSS importé(s)` : "Aucun nouvel article RSS");
   };
   const importCatalog = async () => {
     const d = await run({ action: "import_catalog", importedBy: "u1" }, "catalog");
-    alert(d.imported > 0 ? `✅ ${d.imported} fiche(s) OMS/VIDAL importée(s)` : "Catalogue déjà importé");
+    alert(d.imported > 0 ? `${d.imported} fiche(s) OMS/VIDAL importée(s)` : "Catalogue déjà importé");
   };
   const scrape = async () => {
     if (!url.trim()) return;
@@ -62,16 +62,16 @@ export default function AdminHealthPage() {
     <div className="max-w-6xl mx-auto grid gap-5">
       <div className="card-soft overflow-hidden">
         <div className="mesh-bg grain p-6">
-          <h1 className="font-display text-white text-2xl font-extrabold">🛡️ {locale === "fr" ? "Veille Santé OMS & VIDAL" : "WHO & VIDAL watch"}</h1>
-          <p className="text-white/60 text-[13px] mt-1">{items.length} fiches • {items.filter((i) => i.isApproved).length} publiées • {items.filter((i) => !i.isApproved).length} en attente</p>
+          <h1 className="font-display text-white text-2xl font-extrabold">{locale === "fr" ? "Veille Santé OMS et VIDAL" : "WHO and VIDAL watch"}</h1>
+          <p className="text-white/60 text-[13px] mt-1">{items.length} fiches · {items.filter((i) => i.isApproved).length} publiées · {items.filter((i) => !i.isApproved).length} en attente</p>
           <div className="flex flex-wrap gap-2 mt-4">
-            <button onClick={importFeeds} disabled={!!busy} className="btn-gold text-[13px] !py-2.5">{busy === "rss" ? "⏳ RSS..." : "📡 Importer flux RSS"}</button>
-            <button onClick={importCatalog} disabled={!!busy} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-[13px] !py-2.5">{busy === "catalog" ? "⏳ Catalogue..." : "📚 Importer catalogue OMS/VIDAL"}</button>
+            <button onClick={importFeeds} disabled={!!busy} className="btn-gold text-[13px] !py-2.5">{busy === "rss" ? "Import RSS..." : "Importer flux RSS"}</button>
+            <button onClick={importCatalog} disabled={!!busy} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-[13px] !py-2.5">{busy === "catalog" ? "Import catalogue..." : "Importer catalogue OMS/VIDAL"}</button>
           </div>
         </div>
         <div className="p-4 border-t border-[#E3E9E1] grid md:grid-cols-[1fr_auto] gap-2">
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="🔗 Coller une URL OMS ou VIDAL à scraper... (ex: https://www.who.int/fr/...)" className="bg-[#F6F7F4] border border-[#E3E9E1] rounded-full px-4 py-2.5 text-sm outline-none focus:border-[#1A5632]" />
-          <button onClick={scrape} disabled={busy === "scrape"} className="btn-primary !py-2.5 text-[13px]">{busy === "scrape" ? "⏳ Scraping..." : "🔍 Scraper l'URL"}</button>
+          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Coller une URL OMS ou VIDAL à analyser... (ex : https://www.who.int/fr/...)" className="bg-[#F6F7F4] border border-[#E3E9E1] rounded-full px-4 py-2.5 text-sm outline-none focus:border-[#1A5632]" />
+          <button onClick={scrape} disabled={busy === "scrape"} className="btn-primary !py-2.5 text-[13px]">{busy === "scrape" ? "Analyse..." : "Analyser l'URL"}</button>
         </div>
         {preview && (
           <div className="m-4 rounded-2xl border border-[#D4A843] bg-[#FFFBEB] p-4">
@@ -80,8 +80,8 @@ export default function AdminHealthPage() {
             <p className="text-[13px] text-[#5B6B5F] mt-1">{preview.summary}</p>
             <p className="text-[12px] text-[#5B6B5F] mt-1 truncate">{preview.sourceUrl}</p>
             <div className="flex gap-2 mt-3">
-              <button onClick={() => savePreview(true)} className="btn-primary !py-2 text-[13px]">✅ Enregistrer & publier</button>
-              <button onClick={() => savePreview(false)} className="btn-ghost !py-2 text-[13px]">📥 Brouillon (à valider)</button>
+              <button onClick={() => savePreview(true)} className="btn-primary !py-2 text-[13px]">Enregistrer et publier</button>
+              <button onClick={() => savePreview(false)} className="btn-ghost !py-2 text-[13px]">Brouillon (à valider)</button>
               <button onClick={() => setPreview(null)} className="text-[13px] font-bold text-[#5B6B5F]">Annuler</button>
             </div>
           </div>
@@ -89,7 +89,7 @@ export default function AdminHealthPage() {
       </div>
 
       <div className="card-soft p-4">
-        <h2 className="font-display font-extrabold text-[15px]">📚 Catalogue officiel (1 clic)</h2>
+        <h2 className="font-display font-extrabold text-[15px]">Catalogue officiel (1 clic)</h2>
         <div className="grid sm:grid-cols-2 gap-2 mt-3">
           {catalog.map((c) => (
             <div key={c.url} className="rounded-2xl border border-[#E3E9E1] bg-[#F6F7F4] p-3 flex gap-2 items-start">

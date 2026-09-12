@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { Menu, X, Share2 } from "lucide-react";
 import { type Locale, getDictionary } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -32,19 +33,19 @@ export function Header({ locale }: { locale: Locale }) {
 
   return (
     <>
-      {/* Barre d'annonce */}
-      <div className="fixed top-0 inset-x-0 z-[60] bg-[#0B1F14] text-white/90 text-[12.5px]">
+      <div className="fixed top-0 inset-x-0 z-[60] bg-[#0A2E18] text-white/90 text-[12.5px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-between gap-3">
           <p className="flex items-center gap-2 truncate">
             <span className="live-dot" />
             <span className="truncate">
               {locale === "fr"
-                ? "Veille OMS & VIDAL synchronisée • Rejoins les campagnes AEPHAT"
-                : "WHO & VIDAL watch synced • Join AEPHAT campaigns"}
+                ? "Association des Étudiants en Pharmacie du Togo — Lomé"
+                : "Association of Pharmacy Students of Togo — Lomé"}
             </span>
           </p>
-          <Link href={`/${locale}/partager`} className="hidden sm:inline-flex items-center gap-1 font-semibold text-[#F3DFA0] hover:text-white transition-colors">
-            {locale === "fr" ? "Partager ↗" : "Share ↗"}
+          <Link href={`/${locale}/partager`} className="hidden sm:inline-flex items-center gap-1.5 font-semibold text-white hover:text-[#5AC878] transition-colors">
+            <Share2 className="w-3.5 h-3.5" />
+            {locale === "fr" ? "Partager" : "Share"}
           </Link>
         </div>
       </div>
@@ -53,20 +54,20 @@ export function Header({ locale }: { locale: Locale }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`glass rounded-2xl px-3 sm:px-4 h-14 flex items-center justify-between gap-2 ${scrolled ? "shadow-xl" : "shadow-lg"}`}>
             <Link href={`/${locale}`} className="flex items-center gap-2.5 min-w-0">
-              <span className="w-9 h-9 rounded-xl overflow-hidden bg-white grid place-items-center shadow shrink-0">
+              <span className="w-9 h-9 rounded-xl overflow-hidden bg-white grid place-items-center shadow shrink-0 border border-[#E2E8E6]">
                 <img src={BRAND.logo} alt="AEPHAT" className="w-7 h-7 object-contain" />
               </span>
               <span className="leading-none min-w-0">
-                <span className="font-display font-800 font-extrabold tracking-tight text-[#0B1F14] block text-[16px]">
+                <span className="font-display font-extrabold tracking-tight text-[#101418] block text-[16px]">
                   AEPHAT
                 </span>
-                <span className="text-[10.5px] font-semibold text-[#5B6B5F] hidden sm:block truncate">
-                  {locale === "fr" ? "Pharmacie • Lomé, Togo" : "Pharmacy • Lomé, Togo"}
+                <span className="text-[10.5px] font-semibold text-[#0C6B2D] hidden sm:block truncate">
+                  {locale === "fr" ? "Pharmacie — Lomé, Togo" : "Pharmacy — Lomé, Togo"}
                 </span>
               </span>
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-1 bg-[#EFF2EC] rounded-full p-1">
+            <nav className="hidden lg:flex items-center gap-1 bg-[#F2F5F3] rounded-full p-1">
               {navLinks.map((link) => {
                 const active = pathname === link.href;
                 return (
@@ -74,7 +75,7 @@ export function Header({ locale }: { locale: Locale }) {
                     key={link.href}
                     href={link.href}
                     className={`px-4 py-2 text-[13.5px] font-bold rounded-full transition-all ${
-                      active ? "bg-[#0B1F14] text-white shadow" : "text-[#33463a] hover:bg-white"
+                      active ? "bg-[#101418] text-white shadow" : "text-[#3A454E] hover:bg-white"
                     }`}
                   >
                     {link.label}
@@ -86,12 +87,12 @@ export function Header({ locale }: { locale: Locale }) {
             <div className="flex items-center gap-2">
               <LanguageSwitcher locale={locale} />
               {user ? (
-                <span className="hidden md:inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-[#EFF2EC] text-[13px] font-bold text-[#0B1F14]">
-                  <span className="w-7 h-7 rounded-full bg-[#1A5632] text-white grid place-items-center text-xs">
+                <span className="hidden md:inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-[#F2F5F3] text-[13px] font-bold text-[#101418]">
+                  <span className="w-7 h-7 rounded-full bg-[#1FA34A] text-white grid place-items-center text-xs">
                     {user.name.slice(0, 1).toUpperCase()}
                   </span>
                   <span className="max-w-[120px] truncate">{user.name}</span>
-                  <button onClick={() => setUser(null)} className="text-[#5B6B5F] hover:text-red-600">✕</button>
+                  <button onClick={() => setUser(null)} aria-label="Logout"><X className="w-3.5 h-3.5 text-[#5A6570] hover:text-red-600" /></button>
                 </span>
               ) : (
                 <button onClick={() => setShowLogin(true)} className="btn-primary !py-2.5 !px-4 hidden md:inline-flex text-[13.5px]">
@@ -99,11 +100,11 @@ export function Header({ locale }: { locale: Locale }) {
                 </button>
               )}
               <button
-                className="lg:hidden w-10 h-10 grid place-items-center rounded-xl bg-[#0B1F14] text-white"
+                className="lg:hidden w-10 h-10 grid place-items-center rounded-xl bg-[#101418] text-white"
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label="Menu"
               >
-                {menuOpen ? "✕" : "☰"}
+                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -115,7 +116,7 @@ export function Header({ locale }: { locale: Locale }) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className={`block px-4 py-3 text-sm font-bold rounded-xl ${pathname === link.href ? "bg-[#0B1F14] text-white" : "text-[#0B1F14] hover:bg-[#EFF2EC]"}`}
+                  className={`block px-4 py-3 text-sm font-bold rounded-xl ${pathname === link.href ? "bg-[#101418] text-white" : "text-[#101418] hover:bg-[#F2F5F3]"}`}
                 >
                   {link.label}
                 </Link>

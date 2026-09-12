@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import type { Post } from "@/modules/content/types";
 import { CommentsModal } from "./CommentsModal";
 
@@ -47,8 +48,8 @@ export function PostCard({ post, locale }: { post: Post; locale: string }) {
               {locale === "fr" ? "Vie AEPHAT" : "AEPHAT Life"}
             </span>
             {post.visibility === "students_only" && (
-              <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
-                🔒 {locale === "fr" ? "Étudiants" : "Students"}
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                <Lock className="w-3 h-3" /> {locale === "fr" ? "Étudiants" : "Students"}
               </span>
             )}
             <span className="text-xs text-gray-300">•</span>

@@ -1,49 +1,49 @@
-// Brand configuration for AEPHAT - Dynamic Design
+// Brand AEPHAT — couleurs du logo : vert pharmacie + noir + blanc/gris
 
 export const BRAND = {
   name: "AEPHAT",
   fullName: "Association des Étudiants en Pharmacie du Togo",
   logo: "/brand/aez.png",
-  
+
   colors: {
-    primary: "#1A5632",
-    primaryDark: "#0D3820",
-    primaryLight: "#2D7A4A",
-    primaryGlow: "rgba(26, 86, 50, 0.15)",
-    
-    secondary: "#D4A843",
-    secondaryDark: "#B8922E",
-    secondaryLight: "#E5C075",
-    secondaryGlow: "rgba(212, 168, 67, 0.2)",
-    
-    accent: "#E8F0FE",
-    accentForeground: "#1A5632",
-    
+    primary: "#1FA34A",
+    primaryDark: "#0C6B2D",
+    primaryLight: "#5AC878",
+    primaryGlow: "rgba(31, 163, 74, 0.16)",
+
+    secondary: "#101418",
+    secondaryDark: "#000000",
+    secondaryLight: "#2A333B",
+    secondaryGlow: "rgba(16, 20, 24, 0.18)",
+
+    accent: "#E9F7EE",
+    accentForeground: "#0C6B2D",
+
     background: "#FFFFFF",
-    foreground: "#0F172A",
-    
-    card: "rgba(255, 255, 255, 0.7)",
-    cardForeground: "#0F172A",
-    
-    muted: "#F8FAFC",
-    mutedForeground: "#64748B",
-    
-    border: "#E2E8F0",
-    borderLight: "#F1F5F9",
-    
-    glass: "rgba(255, 255, 255, 0.75)",
-    glassBorder: "rgba(255, 255, 255, 0.3)",
-    
-    success: "#059669",
-    warning: "#D97706",
-    error: "#DC2626",
+    foreground: "#101418",
+
+    card: "#FFFFFF",
+    cardForeground: "#101418",
+
+    muted: "#F2F5F3",
+    mutedForeground: "#5A6570",
+
+    border: "#E2E8E6",
+    borderLight: "#EFF3F1",
+
+    glass: "rgba(255, 255, 255, 0.86)",
+    glassBorder: "rgba(16, 20, 24, 0.08)",
+
+    success: "#1FA34A",
+    warning: "#B7791F",
+    error: "#D64545",
   },
 
   gradients: {
-    primary: "linear-gradient(135deg, #1A5632 0%, #0D3820 100%)",
-    secondary: "linear-gradient(135deg, #D4A843 0%, #B8922E 100%)",
-    hero: "linear-gradient(135deg, #0D3820 0%, #1A5632 50%, #D4A843 100%)",
-    card: "linear-gradient(145deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%)",
+    primary: "linear-gradient(135deg, #1FA34A 0%, #0C6B2D 100%)",
+    secondary: "linear-gradient(135deg, #232c33 0%, #101418 100%)",
+    hero: "linear-gradient(160deg, #071a10 0%, #0A2E18 55%, #0C6B2D 100%)",
+    card: "linear-gradient(145deg, rgba(255,255,255,1) 0%, rgba(242,245,243,1) 100%)",
   },
 
   fonts: {
@@ -63,10 +63,10 @@ export const BRAND = {
   },
 
   shadows: {
-    default: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-    hover: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-    glow: "0 0 30px var(--color-primary-glow)",
-    card: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)",
+    default: "0 4px 6px -1px rgba(10, 46, 24, 0.10), 0 2px 4px -1px rgba(10, 46, 24, 0.06)",
+    hover: "0 25px 50px -12px rgba(10, 46, 24, 0.20)",
+    glow: "0 0 30px rgba(31, 163, 74, 0.16)",
+    card: "0 10px 15px -3px rgba(10, 46, 24, 0.06), 0 4px 6px -2px rgba(10, 46, 24, 0.04)",
   },
 
   transitions: {
