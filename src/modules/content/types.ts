@@ -15,21 +15,36 @@ export interface Post {
   excerpt: string;
   excerptEn?: string;
   imageUrl?: string;
+  /** Galerie multi-images style Instagram (carrousel) */
+  images?: string[];
+  /** Auteur affiché façon réseau social */
+  authorName?: string;
+  authorAvatar?: string;
+  authorHandle?: string;
+  isVerifiedAuthor?: boolean;
+  location?: string;
   status: PostStatus;
   authorId: string;
   category?: PostCategory;
   tags?: string[];
   visibility?: PostVisibility;
   isDemo: boolean;
+  isPinned?: boolean;
+  isSponsored?: boolean;
   scheduledAt?: string;
   likes: number;
+  /** Compteurs sociaux */
+  reposts?: number;
+  shares?: number;
+  bookmarks?: number;
+  views?: number;
   commentCount: number;
   pollId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export type HealthCategory = "alerte" | "prevention" | "recherche" | "pharmacovigilance";
+export type HealthCategory = "alerte" | "prevention" | "recherche" | "pharmacovigilance" | "medicament" | "vaccination";
 export type HealthSourceName = "OMS" | "VIDAL" | "MINISTERE_TOGO" | "AFRICA_CDC";
 
 export interface HealthSource {
@@ -44,11 +59,14 @@ export interface HealthSource {
   sourceName: string;
   sourceType?: HealthSourceName;
   category?: HealthCategory;
+  imageUrl?: string;
   readTimeMinutes?: number;
   verifiedBy?: string;
   publishedDate: string;
   language: "fr" | "en";
   importedBy: string;
+  /** Import automatique (scraping) vs manuel */
+  importMode?: "rss" | "scrape" | "manual" | "catalog";
   isApproved: boolean;
   createdAt: string;
 }
@@ -68,8 +86,23 @@ export interface BureauMember {
   order: number;
 }
 
-export type SiteImageCategory = "hero" | "about" | "post" | "general";
+export type SiteImageCategory =
+  | "hero"
+  | "about"
+  | "post"
+  | "gallery"
+  | "bureau"
+  | "event"
+  | "partner"
+  | "health"
+  | "banner"
+  | "background"
+  | "general";
 
+export type SiteImageVisibility = "everyone" | "students_only";
+export type SiteImageStyle = "rounded" | "circle" | "square" | "blob";
+
+/** Studio image pro : 20+ champs pour une gestion simple ET complète */
 export interface SiteImage {
   id: string;
   url: string;
@@ -77,9 +110,41 @@ export interface SiteImage {
   altEn?: string;
   title?: string;
   titleEn?: string;
+  /** 1. Légende affichée sous l'image */
+  caption?: string;
+  captionEn?: string;
+  /** 2. Crédit photo */
+  credit?: string;
+  /** 3. Lien au clic */
+  linkUrl?: string;
+  openInNewTab?: boolean;
+  /** 4. Tags libres */
+  tags?: string[];
   category: SiteImageCategory;
   order: number;
   isActive: boolean;
+  /** 5. Mise en avant */
+  isFeatured?: boolean;
+  /** 6. Visibilité */
+  visibility?: SiteImageVisibility;
+  /** 7. Planification */
+  publishAt?: string;
+  expireAt?: string;
+  /** 8. Style d'affichage */
+  style?: SiteImageStyle;
+  withShadow?: boolean;
+  withBorder?: boolean;
+  /** 9. Point focal (object-position) */
+  focalX?: number; // 0-100
+  focalY?: number; // 0-100
+  /** 10. Opacité / overlay pour hero */
+  overlayOpacity?: number; // 0-90
+  /** 11. Dimensions d'origine (auto-remplies) */
+  width?: number;
+  height?: number;
+  fileSizeKb?: number;
+  /** 12. Source : upload / url / unsplash / ai */
+  source?: "upload" | "url" | "unsplash" | "catalog";
   createdAt: string;
   updatedAt: string;
 }

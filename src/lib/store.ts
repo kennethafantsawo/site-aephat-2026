@@ -91,8 +91,15 @@ export function getData(): DataStore {
   return DEFAULT_DATA;
 }
 
+let memoryFallback: DataStore | null = null;
+
 export function saveData(data: DataStore): void {
-  writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+  memoryFallback = data;
+  try {
+    writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+  } catch {
+    // Filesystem en lecture seule (Netlify Functions) : on garde en mémoire
+  }
 }
 
 export function resetData(): void {

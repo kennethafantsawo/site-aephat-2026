@@ -17,10 +17,10 @@ export function Header({ locale }: { locale: Locale }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const navLinks = [
@@ -30,48 +30,53 @@ export function Header({ locale }: { locale: Locale }) {
     { href: `/${locale}/a-propos`, label: t.nav.about },
   ];
 
-  const handleLogout = () => setUser(null);
-
   return (
     <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? "glass shadow-lg" : "bg-white/90 backdrop-blur-sm"
-        }`}
-      >
-        {/* Animated border line */}
-        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary via-secondary to-primary opacity-50" />
-        
+      {/* Barre d'annonce */}
+      <div className="fixed top-0 inset-x-0 z-[60] bg-[#0B1F14] text-white/90 text-[12.5px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-between gap-3">
+          <p className="flex items-center gap-2 truncate">
+            <span className="live-dot" />
+            <span className="truncate">
+              {locale === "fr"
+                ? "Veille OMS & VIDAL synchronisée • Rejoins les campagnes AEPHAT"
+                : "WHO & VIDAL watch synced • Join AEPHAT campaigns"}
+            </span>
+          </p>
+          <Link href={`/${locale}/partager`} className="hidden sm:inline-flex items-center gap-1 font-semibold text-[#F3DFA0] hover:text-white transition-colors">
+            {locale === "fr" ? "Partager ↗" : "Share ↗"}
+          </Link>
+        </div>
+      </div>
+
+      <header className={`fixed top-9 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "py-2" : "py-3"}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href={`/${locale}`} className="flex items-center gap-2.5 cursor-pointer group">
-              <img src={BRAND.logo} alt="AEPHAT" className="h-8 w-auto drop-shadow-sm" />
-              <div className="flex flex-col">
-                <span className="text-[17px] font-bold tracking-tight text-primary-dark leading-none">
+          <div className={`glass rounded-2xl px-3 sm:px-4 h-14 flex items-center justify-between gap-2 ${scrolled ? "shadow-xl" : "shadow-lg"}`}>
+            <Link href={`/${locale}`} className="flex items-center gap-2.5 min-w-0">
+              <span className="w-9 h-9 rounded-xl overflow-hidden bg-white grid place-items-center shadow shrink-0">
+                <img src={BRAND.logo} alt="AEPHAT" className="w-7 h-7 object-contain" />
+              </span>
+              <span className="leading-none min-w-0">
+                <span className="font-display font-800 font-extrabold tracking-tight text-[#0B1F14] block text-[16px]">
                   AEPHAT
                 </span>
-                <span className="text-[10px] font-medium text-secondary leading-none mt-0.5 hidden sm:block">
-                  Étudiants en Pharmacie du Togo
+                <span className="text-[10.5px] font-semibold text-[#5B6B5F] hidden sm:block truncate">
+                  {locale === "fr" ? "Pharmacie • Lomé, Togo" : "Pharmacy • Lomé, Togo"}
                 </span>
-              </div>
+              </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1 bg-[#EFF2EC] rounded-full p-1">
               {navLinks.map((link) => {
                 const active = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-3.5 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer relative overflow-hidden ${
-                      active
-                        ? "text-primary"
-                        : "text-gray-600 hover:text-gray-900"
+                    className={`px-4 py-2 text-[13.5px] font-bold rounded-full transition-all ${
+                      active ? "bg-[#0B1F14] text-white shadow" : "text-[#33463a] hover:bg-white"
                     }`}
                   >
-                    {active && (
-                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-secondary" />
-                    )}
                     {link.label}
                   </Link>
                 );
@@ -81,64 +86,44 @@ export function Header({ locale }: { locale: Locale }) {
             <div className="flex items-center gap-2">
               <LanguageSwitcher locale={locale} />
               {user ? (
-                <div className="hidden md:flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">{user.name}</span>
-                  <button
-                    onClick={handleLogout}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                  >
-                    {t.nav.logout}
-                  </button>
-                </div>
+                <span className="hidden md:inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-[#EFF2EC] text-[13px] font-bold text-[#0B1F14]">
+                  <span className="w-7 h-7 rounded-full bg-[#1A5632] text-white grid place-items-center text-xs">
+                    {user.name.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="max-w-[120px] truncate">{user.name}</span>
+                  <button onClick={() => setUser(null)} className="text-[#5B6B5F] hover:text-red-600">✕</button>
+                </span>
               ) : (
-                <button
-                  onClick={() => setShowLogin(true)}
-                  className="hidden md:inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer"
-                >
+                <button onClick={() => setShowLogin(true)} className="btn-primary !py-2.5 !px-4 hidden md:inline-flex text-[13.5px]">
                   {t.nav.login}
                 </button>
               )}
               <button
-                className="md:hidden p-2 text-gray-600 hover:text-primary transition-colors cursor-pointer"
-                onClick={() => setMenuOpen(!menuOpen)}
+                className="lg:hidden w-10 h-10 grid place-items-center rounded-xl bg-[#0B1F14] text-white"
+                onClick={() => setMenuOpen((v) => !v)}
                 aria-label="Menu"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {menuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
+                {menuOpen ? "✕" : "☰"}
               </button>
             </div>
           </div>
 
           {menuOpen && (
-            <div className="md:hidden pb-4 pt-2 border-t border-gray-100 space-y-1 animate-fade-in">
+            <div className="lg:hidden mt-2 glass rounded-2xl p-2 animate-fade-in">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className={`block px-3 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-colors ${
-                    pathname === link.href
-                      ? "bg-primary/10 text-primary"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`block px-4 py-3 text-sm font-bold rounded-xl ${pathname === link.href ? "bg-[#0B1F14] text-white" : "text-[#0B1F14] hover:bg-[#EFF2EC]"}`}
                 >
                   {link.label}
                 </Link>
               ))}
-              {user ? (
-                <div className="px-3 py-2.5">
-                  <p className="text-sm font-medium text-gray-700">{user.name}</p>
-                  <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="text-xs text-red-500 cursor-pointer">{t.nav.logout}</button>
-                </div>
-              ) : (
+              {!user && (
                 <button
                   onClick={() => { setShowLogin(true); setMenuOpen(false); }}
-                  className="w-full px-3 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold rounded-lg cursor-pointer"
+                  className="btn-primary w-full justify-center mt-1"
                 >
                   {t.nav.login}
                 </button>
@@ -149,11 +134,7 @@ export function Header({ locale }: { locale: Locale }) {
       </header>
 
       {showLogin && (
-        <MemberAuthModal
-          locale={locale}
-          onClose={() => setShowLogin(false)}
-          onLogin={(u) => setUser(u)}
-        />
+        <MemberAuthModal locale={locale} onClose={() => setShowLogin(false)} onLogin={(u) => setUser(u)} />
       )}
     </>
   );

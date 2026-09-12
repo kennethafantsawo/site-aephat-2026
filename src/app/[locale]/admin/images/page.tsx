@@ -1,15 +1,50 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import type { SiteImage, SiteImageCategory } from "@/modules/content/types";
 
-const CATEGORY_LABELS: Record<SiteImageCategory, Record<string, string>> = {
-  hero: { fr: "Carousel hero", en: "Hero carousel" },
-  about: { fr: "À propos", en: "About" },
-  post: { fr: "Articles", en: "Posts" },
-  general: { fr: "Général", en: "General" },
+const CATS: { k: SiteImageCategory; fr: string; en: string; emoji: string }[] = [
+  { k: "hero", fr: "Carousel hero", en: "Hero carousel", emoji: "🎠" },
+  { k: "banner", fr: "Bannières", en: "Banners", emoji: "📢" },
+  { k: "gallery", fr: "Galerie", en: "Gallery", emoji: "🖼️" },
+  { k: "post", fr: "Publications", en: "Posts", emoji: "📸" },
+  { k: "event", fr: "Événements", en: "Events", emoji: "🎉" },
+  { k: "bureau", fr: "Bureau", en: "Board", emoji: "👥" },
+  { k: "health", fr: "Santé", en: "Health", emoji: "🛡️" },
+  { k: "partner", fr: "Partenaires", en: "Partners", emoji: "🤝" },
+  { k: "about", fr: "À propos", en: "About", emoji: "ℹ️" },
+  { k: "background", fr: "Fonds", en: "Backgrounds", emoji: "🌄" },
+  { k: "general", fr: "Général", en: "General", emoji: "📁" },
+];
+
+const UNSPLASH_PRESETS = [
+  { label: "Labo pharmacie", url: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&h=900&fit=crop" },
+  { label: "Médicaments", url: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1600&h=900&fit=crop" },
+  { label: "Recherche", url: "https://images.unsplash.com/photo-1585435557343-3b092031a831?w=1600&h=900&fit=crop" },
+  { label: "Santé", url: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1600&h=900&fit=crop" },
+  { label: "Vaccination", url: "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1600&h=900&fit=crop" },
+  { label: "Équipe médicale", url: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&h=900&fit=crop" },
+];
+
+function seoScore(img: SiteImage): { score: number; tips: string[] } {
+  let s = 0; const tips: string[] = [];
+  if (img.alt?.length > 5) s += 30; else tips.push("Ajouter un texte Alt FR");
+  if (img.title) s += 20; else tips.push("Ajouter un titre");
+  if (img.caption) s += 20; else tips.push("Ajouter une légende");
+  if ((img.tags || []).length > 0) s += 15; else tips.push("Ajouter des tags");
+  if (img.credit) s += 15; else tips.push("Ajouter le crédit");
+  return { score: s, tips };
+}
+
+const emptyForm = {
+  url: "", alt: "", altEn: "", title: "", titleEn: "", caption: "", captionEn: "",
+  credit: "", linkUrl: "", openInNewTab: true, tags: "" as string,
+  category: "hero" as SiteImageCategory, isActive: true, isFeatured: false,
+  visibility: "everyone" as "everyone" | "students_only",
+  publishAt: "", expireAt: "", style: "rounded" as "rounded" | "circle" | "square" | "blob",
+  withShadow: true, withBorder: false, focalX: 50, focalY: 50, overlayOpacity: 45,
 };
 
 export default function AdminImagesPage() {
@@ -19,197 +54,407 @@ export default function AdminImagesPage() {
   const [images, setImages] = useState<SiteImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingImage, setEditingImage] = useState<SiteImage | null>(null);
-  const [filter, setFilter] = useState<SiteImageCategory | "all">("all");
-  const [form, setForm] = useState({ url: "", alt: "", altEn: "", title: "", titleEn: "", category: "hero" as SiteImageCategory, isActive: true });
+  const [editing, setEditing] = useState<SiteImage | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [cat, setCat] = useState<SiteImageCategory | "all">("all");
+  const [status, setStatus] = useState<"all" | "active" | "inactive" | "featured" | "scheduled">("all");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"order" | "recent" | "name" | "seo">("order");
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [lightbox, setLightbox] = useState<SiteImage | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
+  const [imgMeta, setImgMeta] = useState<{ w?: number; h?: number; kb?: number }>({});
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetch("/api/site-images").then((r) => r.json()).then((d) => { setImages(d); setLoading(false); });
-  }, []);
+  const reload = () => fetch("/api/site-images").then((r) => r.json()).then((d) => { setImages(d); setLoading(false); });
+  useEffect(() => { reload(); }, []);
 
-  const filtered = filter === "all" ? images : images.filter((img) => img.category === filter);
+  const log = (msg: string) => setHistory((h) => [`${new Date().toLocaleTimeString()} — ${msg}`, ...h].slice(0, 20));
 
-  const openAdd = () => {
-    setEditingImage(null);
-    setForm({ url: "", alt: "", altEn: "", title: "", titleEn: "", category: "hero", isActive: true });
-    setShowForm(true);
-  };
+  const filtered = useMemo(() => {
+    let list = [...images];
+    if (cat !== "all") list = list.filter((i) => i.category === cat);
+    if (status === "active") list = list.filter((i) => i.isActive);
+    if (status === "inactive") list = list.filter((i) => !i.isActive);
+    if (status === "featured") list = list.filter((i) => i.isFeatured);
+    if (status === "scheduled") list = list.filter((i) => i.publishAt || i.expireAt);
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      list = list.filter((i) => `${i.alt} ${i.title || ""} ${i.caption || ""} ${i.credit || ""} ${(i.tags || []).join(" ")}`.toLowerCase().includes(q));
+    }
+    if (sort === "order") list.sort((a, b) => a.order - b.order);
+    if (sort === "recent") list.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+    if (sort === "name") list.sort((a, b) => (a.alt || "").localeCompare(b.alt || ""));
+    if (sort === "seo") list.sort((a, b) => seoScore(b).score - seoScore(a).score);
+    return list;
+  }, [images, cat, status, query, sort]);
 
+  const totalKb = images.reduce((s, i) => s + (i.fileSizeKb || 120), 0);
+
+  const openAdd = () => { setEditing(null); setForm(emptyForm); setImgMeta({}); setShowForm(true); };
   const openEdit = (img: SiteImage) => {
-    setEditingImage(img);
-    setForm({ url: img.url, alt: img.alt, altEn: img.altEn || "", title: img.title || "", titleEn: img.titleEn || "", category: img.category, isActive: img.isActive });
+    setEditing(img);
+    setForm({
+      url: img.url, alt: img.alt, altEn: img.altEn || "", title: img.title || "", titleEn: img.titleEn || "",
+      caption: img.caption || "", captionEn: img.captionEn || "", credit: img.credit || "",
+      linkUrl: img.linkUrl || "", openInNewTab: img.openInNewTab ?? true, tags: (img.tags || []).join(", "),
+      category: img.category, isActive: img.isActive, isFeatured: !!img.isFeatured,
+      visibility: img.visibility || "everyone", publishAt: img.publishAt ? img.publishAt.slice(0, 16) : "",
+      expireAt: img.expireAt ? img.expireAt.slice(0, 16) : "", style: img.style || "rounded",
+      withShadow: img.withShadow ?? true, withBorder: !!img.withBorder,
+      focalX: img.focalX ?? 50, focalY: img.focalY ?? 50, overlayOpacity: img.overlayOpacity ?? 45,
+    });
+    setImgMeta({ w: img.width, h: img.height, kb: img.fileSizeKb });
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const payload = () => ({
+    ...form, tags: form.tags.split(",").map((x) => x.trim()).filter(Boolean),
+    publishAt: form.publishAt ? new Date(form.publishAt).toISOString() : undefined,
+    expireAt: form.expireAt ? new Date(form.expireAt).toISOString() : undefined,
+    width: imgMeta.w, height: imgMeta.h, fileSizeKb: imgMeta.kb,
+    source: editing?.source || (form.url.startsWith("data:") ? "upload" : form.url.includes("unsplash") ? "unsplash" : "url"),
+  });
+
+  const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingImage) {
-      await fetch("/api/site-images", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingImage.id, ...form }) });
-      setImages((prev) => prev.map((img) => img.id === editingImage.id ? { ...img, ...form, updatedAt: new Date().toISOString() } : img));
+    if (editing) {
+      const r = await fetch("/api/site-images", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editing.id, ...payload() }) });
+      const u = await r.json();
+      setImages((p) => p.map((x) => (x.id === editing.id ? u : x)));
+      log(`Modifiée : ${u.alt}`);
     } else {
-      const res = await fetch("/api/site-images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, order: images.length + 1 }) });
-      const newImg = await res.json();
-      setImages((prev) => [...prev, newImg]);
+      const r = await fetch("/api/site-images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload(), order: images.length + 1 }) });
+      const n = await r.json();
+      setImages((p) => [...p, n]);
+      log(`Ajoutée : ${n.alt}`);
     }
     setShowForm(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(locale === "fr" ? "Supprimer cette image ?" : "Delete this image?")) return;
+  const remove = async (id: string) => {
+    if (!confirm("Supprimer cette image ?")) return;
     await fetch(`/api/site-images?id=${id}`, { method: "DELETE" });
-    setImages((prev) => prev.filter((img) => img.id !== id));
+    setImages((p) => p.filter((x) => x.id !== id));
+    log("Supprimée");
   };
 
-  const handleToggleActive = async (img: SiteImage) => {
-    const updated = { ...img, isActive: !img.isActive };
-    await fetch("/api/site-images", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updated) });
-    setImages((prev) => prev.map((i) => i.id === img.id ? updated : i));
+  const toggle = async (img: SiteImage) => {
+    const r = await fetch("/api/site-images", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: img.id, isActive: !img.isActive }) });
+    const u = await r.json();
+    setImages((p) => p.map((x) => (x.id === img.id ? u : x)));
   };
 
-  const handleReorder = async (id: string, direction: "up" | "down") => {
-    const idx = filtered.findIndex((img) => img.id === id);
-    if (idx === -1) return;
-    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= filtered.length) return;
-    const a = filtered[idx];
-    const b = filtered[swapIdx];
+  const duplicate = async (img: SiteImage) => {
+    const r = await fetch("/api/site-images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...img, id: undefined, alt: img.alt + " (copie)", order: images.length + 1 }) });
+    const n = await r.json();
+    setImages((p) => [...p, n]);
+    log(`Dupliquée : ${img.alt}`);
+  };
+
+  const move = async (img: SiteImage, dir: "up" | "down") => {
+    const arr = [...images].sort((a, b) => a.order - b.order);
+    const i = arr.findIndex((x) => x.id === img.id);
+    const j = dir === "up" ? i - 1 : i + 1;
+    if (j < 0 || j >= arr.length) return;
+    const a = arr[i], b = arr[j];
     await fetch("/api/site-images", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: a.id, order: b.order }) });
     await fetch("/api/site-images", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: b.id, order: a.order }) });
-    setImages((prev) => prev.map((img) => {
-      if (img.id === a.id) return { ...img, order: b.order };
-      if (img.id === b.id) return { ...img, order: a.order };
-      return img;
-    }));
+    setImages((p) => p.map((x) => (x.id === a.id ? { ...x, order: b.order } : x.id === b.id ? { ...x, order: a.order } : x)));
   };
 
-  if (loading) return <div className="max-w-6xl mx-auto px-6 py-12"><p className="text-gray-500">{t.common.loading}</p></div>;
+  const bulk = async (action: "activate" | "deactivate" | "delete" | "feature") => {
+    if (selected.length === 0) return;
+    if (action === "delete" && !confirm(`Supprimer ${selected.length} images ?`)) return;
+    for (const id of selected) {
+      if (action === "delete") await fetch(`/api/site-images?id=${id}`, { method: "DELETE" });
+      else {
+        const patch = action === "activate" ? { isActive: true } : action === "deactivate" ? { isActive: false } : { isFeatured: true };
+        await fetch("/api/site-images", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, ...patch }) });
+      }
+    }
+    log(`Action groupée ${action} : ${selected.length}`);
+    setSelected([]);
+    reload();
+  };
+
+  const onFile = (f: File) => {
+    const rd = new FileReader();
+    rd.onload = () => {
+      const url = String(rd.result);
+      const im = new Image();
+      im.onload = () => setImgMeta({ w: im.width, h: im.height, kb: Math.round(f.size / 1024) });
+      im.src = url;
+      setForm((x) => ({ ...x, url, alt: x.alt || f.name.replace(/\.[^.]+$/, "") }));
+      setShowForm(true);
+    };
+    rd.readAsDataURL(f);
+  };
+
+  const exportJSON = () => {
+    const blob = new Blob([JSON.stringify(images, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "aephat-images.json";
+    a.click();
+  };
+
+  const importJSON = (f: File) => {
+    const rd = new FileReader();
+    rd.onload = async () => {
+      try {
+        const arr = JSON.parse(String(rd.result));
+        for (const it of (Array.isArray(arr) ? arr : []).slice(0, 100)) {
+          await fetch("/api/site-images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...it, id: undefined }) });
+        }
+        log("Import JSON terminé");
+        reload();
+      } catch { alert("Fichier invalide"); }
+    };
+    rd.readAsText(f);
+  };
+
+  if (loading) return <div className="p-8 text-sm text-gray-500">{t.common.loading}</div>;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">{locale === "fr" ? "Gestion des images" : "Image management"}</h1>
-          <p className="text-sm text-gray-500 mt-1">{locale === "fr" ? "Gérez les images du site : carousel, articles, etc." : "Manage site images: carousel, posts, etc."}</p>
+    <div className="max-w-7xl mx-auto">
+      {/* En-tête studio */}
+      <div className="card-soft overflow-hidden mb-5">
+        <div className="mesh-bg grain p-6 flex flex-wrap gap-4 items-center justify-between">
+          <div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#F3DFA0]">Studio • 20+ fonctions</p>
+            <h1 className="font-display text-white text-2xl sm:text-3xl font-extrabold">📸 {locale === "fr" ? "Gestion des images" : "Image studio"}</h1>
+            <p className="text-white/60 text-[13px] mt-1">{images.length} images • {(totalKb / 1024).toFixed(1)} Mo • {images.filter((i) => i.isFeatured).length} en avant</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={openAdd} className="btn-gold text-sm">+ {locale === "fr" ? "Ajouter" : "Add"}</button>
+            <button onClick={() => fileRef.current?.click()} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-sm">⬆️ Upload</button>
+            <button onClick={exportJSON} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-sm">📤 Export</button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+          </div>
         </div>
-        <button onClick={openAdd} className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary-dark transition-colors cursor-pointer">
-          + {locale === "fr" ? "Ajouter" : "Add"}
-        </button>
+        {/* Barre d'outils */}
+        <div className="p-4 grid lg:grid-cols-[1fr_auto] gap-3 border-t border-[#E3E9E1]">
+          <div className="flex flex-wrap gap-2 items-center">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="🔍 Rechercher (titre, tag, crédit...)" className="min-w-[220px] flex-1 bg-[#F6F7F4] border border-[#E3E9E1] rounded-full px-4 py-2 text-sm outline-none focus:border-[#1A5632]" />
+            <select value={cat} onChange={(e) => setCat(e.target.value as SiteImageCategory | "all")} className="bg-white border border-[#E3E9E1] rounded-full px-3 py-2 text-[13px] font-bold">
+              <option value="all">Toutes catégories</option>
+              {CATS.map((c) => <option key={c.k} value={c.k}>{c.emoji} {locale === "fr" ? c.fr : c.en}</option>)}
+            </select>
+            <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="bg-white border border-[#E3E9E1] rounded-full px-3 py-2 text-[13px] font-bold">
+              <option value="all">Tous statuts</option>
+              <option value="active">✅ Actives</option>
+              <option value="inactive">⏸️ Inactives</option>
+              <option value="featured">⭐ En avant</option>
+              <option value="scheduled">🗓️ Planifiées</option>
+            </select>
+            <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="bg-white border border-[#E3E9E1] rounded-full px-3 py-2 text-[13px] font-bold">
+              <option value="order">↕️ Ordre</option>
+              <option value="recent">🕘 Récentes</option>
+              <option value="name">🔤 Nom</option>
+              <option value="seo">🚀 Score SEO</option>
+            </select>
+            <div className="flex bg-[#EFF2EC] rounded-full p-1">
+              <button onClick={() => setView("grid")} className={`px-3 py-1.5 rounded-full text-[13px] font-extrabold ${view === "grid" ? "bg-[#0B1F14] text-white" : ""}`}>🔲</button>
+              <button onClick={() => setView("list")} className={`px-3 py-1.5 rounded-full text-[13px] font-extrabold ${view === "list" ? "bg-[#0B1F14] text-white" : ""}`}>📋</button>
+            </div>
+          </div>
+          <div className="flex gap-2 items-center">
+            <label className="text-[12px] font-bold text-[#5B6B5F]">📥 Import JSON <input type="file" accept=".json" className="hidden" onChange={(e) => e.target.files?.[0] && importJSON(e.target.files[0])} /></label>
+            {selected.length > 0 && (
+              <span className="flex gap-1.5">
+                <button onClick={() => bulk("activate")} className="text-[12px] font-extrabold bg-green-100 text-green-800 rounded-full px-3 py-1.5">✅ {selected.length}</button>
+                <button onClick={() => bulk("deactivate")} className="text-[12px] font-extrabold bg-gray-100 rounded-full px-3 py-1.5">⏸️</button>
+                <button onClick={() => bulk("feature")} className="text-[12px] font-extrabold bg-yellow-100 text-yellow-800 rounded-full px-3 py-1.5">⭐</button>
+                <button onClick={() => bulk("delete")} className="text-[12px] font-extrabold bg-red-100 text-red-700 rounded-full px-3 py-1.5">🗑️</button>
+              </span>
+            )}
+          </div>
+        </div>
+        {/* Zone drag-drop */}
+        <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
+          className={`mx-4 mb-4 rounded-2xl border-2 border-dashed text-center py-4 text-[13px] font-bold transition-all ${dragOver ? "border-[#1A5632] bg-green-50 text-[#1A5632]" : "border-[#E3E9E1] text-[#5B6B5F]"}`}>
+          🖱️ Glisser-déposer une image ici pour l'ajouter instantanément (upload local base64)
+        </div>
       </div>
 
-      <div className="flex gap-2 mb-6 flex-wrap">
-        <button onClick={() => setFilter("all")} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${filter === "all" ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-          {locale === "fr" ? "Toutes" : "All"}
-        </button>
-        {(Object.keys(CATEGORY_LABELS) as SiteImageCategory[]).map((cat) => (
-          <button key={cat} onClick={() => setFilter(cat)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${filter === cat ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-            {CATEGORY_LABELS[cat][locale]}
-          </button>
-        ))}
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-          <p className="text-gray-400">{locale === "fr" ? "Aucune image" : "No images"}</p>
+      {/* Grille / liste */}
+      {view === "grid" ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((img) => {
+            const seo = seoScore(img);
+            return (
+              <div key={img.id} className={`card-soft card-hover overflow-hidden ${selected.includes(img.id) ? "!border-[#1A5632] ring-2 ring-[#1A5632]/20" : ""}`}>
+                <div className="relative h-44 bg-[#0B1F14] cursor-pointer" onClick={() => setLightbox(img)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.url} alt={img.alt} className="w-full h-full object-cover" style={{ objectPosition: `${img.focalX ?? 50}% ${img.focalY ?? 50}%` }} />
+                  <div className="absolute top-2 left-2 flex gap-1.5">
+                    {img.isFeatured && <span className="text-[11px] font-extrabold bg-[#D4A843] text-[#241a02] rounded-full px-2.5 py-1">⭐</span>}
+                    {!img.isActive && <span className="text-[11px] font-extrabold bg-black/60 text-white rounded-full px-2.5 py-1">⏸️</span>}
+                    <span className="text-[11px] font-extrabold bg-black/60 text-white rounded-full px-2.5 py-1">SEO {seo.score}</span>
+                  </div>
+                  <input type="checkbox" checked={selected.includes(img.id)} onChange={() => setSelected((s) => (s.includes(img.id) ? s.filter((x) => x !== img.id) : [...s, img.id]))} onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 w-5 h-5 accent-[#1A5632]" />
+                </div>
+                <div className="p-4">
+                  <p className="font-extrabold text-[14px] truncate">{img.title || img.alt}</p>
+                  <p className="text-[12px] text-[#5B6B5F] truncate">{CATS.find((c) => c.k === img.category)?.fr} • #{img.order} • {(img.tags || []).slice(0, 3).join(", ")}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    <button onClick={() => openEdit(img)} className="text-[12px] font-extrabold bg-[#EFF2EC] rounded-full px-3 py-1.5 hover:bg-[#0B1F14] hover:text-white transition-all">✏️ Modifier</button>
+                    <button onClick={() => toggle(img)} className="text-[12px] font-extrabold bg-[#EFF2EC] rounded-full px-3 py-1.5">{img.isActive ? "⏸️" : "▶️"}</button>
+                    <button onClick={() => duplicate(img)} className="text-[12px] font-extrabold bg-[#EFF2EC] rounded-full px-3 py-1.5">⧉</button>
+                    <button onClick={() => move(img, "up")} className="text-[12px] font-extrabold bg-[#EFF2EC] rounded-full px-3 py-1.5">↑</button>
+                    <button onClick={() => move(img, "down")} className="text-[12px] font-extrabold bg-[#EFF2EC] rounded-full px-3 py-1.5">↓</button>
+                    <button onClick={() => remove(img.id)} className="text-[12px] font-extrabold bg-red-50 text-red-600 rounded-full px-3 py-1.5">🗑️</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.sort((a, b) => a.order - b.order).map((img) => (
-            <div key={img.id} className={`bg-white border rounded-xl p-4 flex items-center gap-4 transition-colors ${img.isActive ? "border-gray-200" : "border-gray-100 opacity-50"}`}>
-              <div className="w-24 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+        <div className="grid gap-2.5">
+          {filtered.map((img) => (
+            <div key={img.id} className="card-soft p-3 flex items-center gap-3">
+              <input type="checkbox" checked={selected.includes(img.id)} onChange={() => setSelected((s) => (s.includes(img.id) ? s.filter((x) => x !== img.id) : [...s, img.id]))} className="w-5 h-5 accent-[#1A5632]" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="w-20 h-14 rounded-xl object-cover cursor-pointer" onClick={() => setLightbox(img)} />
+              <div className="min-w-0 flex-1">
+                <p className="font-extrabold text-[13.5px] truncate">{img.title || img.alt}</p>
+                <p className="text-[12px] text-[#5B6B5F] truncate">{img.category} • #{img.order} • {img.isActive ? "✅" : "⏸️"} • SEO {seoScore(img).score}</p>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
-                    {CATEGORY_LABELS[img.category][locale]}
-                  </span>
-                  <span className="text-xs text-gray-400">#{img.order}</span>
-                </div>
-                {(img.title || img.titleEn) && (
-                  <p className="text-sm font-semibold text-gray-900 mt-1 truncate">
-                    {locale === "en" && img.titleEn ? img.titleEn : img.title}
-                  </p>
-                )}
-                <p className="text-xs text-gray-400 truncate">{img.alt}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => handleReorder(img.id, "up")} className="p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer" title="Up">↑</button>
-                <button onClick={() => handleReorder(img.id, "down")} className="p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer" title="Down">↓</button>
-                <button onClick={() => handleToggleActive(img)} className={`p-1.5 cursor-pointer ${img.isActive ? "text-green-500 hover:text-green-700" : "text-gray-400 hover:text-gray-600"}`} title={img.isActive ? "Active" : "Inactive"}>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={img.isActive ? "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" : "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"} /></svg>
-                </button>
-                <button onClick={() => openEdit(img)} className="p-1.5 text-gray-400 hover:text-primary cursor-pointer">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                </button>
-                <button onClick={() => handleDelete(img.id)} className="p-1.5 text-gray-400 hover:text-red-500 cursor-pointer">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
-              </div>
+              <button onClick={() => openEdit(img)} className="text-[12px] font-extrabold bg-[#EFF2EC] rounded-full px-3 py-1.5">✏️</button>
+              <button onClick={() => duplicate(img)} className="text-[12px] font-extrabold bg-[#EFF2EC] rounded-full px-3 py-1.5">⧉</button>
+              <button onClick={() => remove(img.id)} className="text-[12px] font-extrabold bg-red-50 text-red-600 rounded-full px-3 py-1.5">🗑️</button>
             </div>
           ))}
         </div>
       )}
 
+      {/* Historique */}
+      <div className="card-soft p-5 mt-5">
+        <h3 className="font-display font-extrabold text-[15px]">🕘 {locale === "fr" ? "Historique de session" : "Session history"}</h3>
+        <ul className="mt-2 text-[12.5px] text-[#5B6B5F] grid gap-1">{history.length === 0 ? <li>—</li> : history.map((h, i) => <li key={i}>• {h}</li>)}</ul>
+      </div>
+
+      {/* Formulaire complet */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
-              {editingImage ? (locale === "fr" ? "Modifier l'image" : "Edit image") : (locale === "fr" ? "Ajouter une image" : "Add image")}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">URL de l'image</label>
-                <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="https://..." required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto" onClick={() => setShowForm(false)}>
+          <div className="bg-white rounded-3xl max-w-4xl mx-auto overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="mesh-bg grain p-5 flex items-center justify-between">
+              <h2 className="font-display text-white font-extrabold text-lg">{editing ? "✏️ Modifier l'image" : "➕ Nouvelle image"}</h2>
+              <button onClick={() => setShowForm(false)} className="w-9 h-9 rounded-full bg-white/15 text-white">✕</button>
+            </div>
+            <form onSubmit={save} className="p-5 grid lg:grid-cols-[1fr_320px] gap-5">
+              <div className="grid gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Alt (FR)</label>
-                  <input value={form.alt} onChange={(e) => setForm({ ...form, alt: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Alt (EN)</label>
-                  <input value={form.altEn} onChange={(e) => setForm({ ...form, altEn: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{locale === "fr" ? "Titre sur l'image (FR)" : "Image title (FR)"}</label>
-                  <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder={locale === "fr" ? "Ex: Nouveau laboratoire" : "Ex: New laboratory"} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{locale === "fr" ? "Titre sur l'image (EN)" : "Image title (EN)"}</label>
-                  <input value={form.titleEn} onChange={(e) => setForm({ ...form, titleEn: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="Ex: New laboratory" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{locale === "fr" ? "Catégorie" : "Category"}</label>
-                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as SiteImageCategory })} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                  {(Object.keys(CATEGORY_LABELS) as SiteImageCategory[]).map((cat) => (
-                    <option key={cat} value={cat}>{CATEGORY_LABELS[cat][locale]}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded border-gray-300 text-primary focus:ring-primary" />
-                <label htmlFor="isActive" className="text-sm text-gray-700">{locale === "fr" ? "Active" : "Active"}</label>
-              </div>
-              {form.url && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{locale === "fr" ? "Aperçu" : "Preview"}</label>
-                  <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
-                    <img src={form.url} alt={form.alt} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <label className="text-[13px] font-extrabold">1️⃣ URL de l'image *</label>
+                  <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} required placeholder="https://... ou upload" className="mt-1 w-full border border-[#E3E9E1] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1A5632]" />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {UNSPLASH_PRESETS.map((p) => (
+                      <button type="button" key={p.url} onClick={() => setForm({ ...form, url: p.url, alt: form.alt || p.label })} className="text-[11.5px] font-bold bg-[#EFF2EC] rounded-full px-2.5 py-1.5 hover:bg-[#0B1F14] hover:text-white transition-all">🖼️ {p.label}</button>
+                    ))}
                   </div>
                 </div>
-              )}
-              <div className="flex gap-3 pt-2">
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-dark transition-colors cursor-pointer">
-                  {editingImage ? (locale === "fr" ? "Enregistrer" : "Save") : (locale === "fr" ? "Ajouter" : "Add")}
-                </button>
-                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
-                  {t.common.cancel}
-                </button>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div><label className="text-[13px] font-extrabold">2️⃣ Alt FR *</label><input value={form.alt} onChange={(e) => setForm({ ...form, alt: e.target.value })} required className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">Alt EN</label><input value={form.altEn} onChange={(e) => setForm({ ...form, altEn: e.target.value })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">3️⃣ Titre FR</label><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">Titre EN</label><input value={form.titleEn} onChange={(e) => setForm({ ...form, titleEn: e.target.value })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">4️⃣ Légende FR</label><input value={form.caption} onChange={(e) => setForm({ ...form, caption: e.target.value })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">Légende EN</label><input value={form.captionEn} onChange={(e) => setForm({ ...form, captionEn: e.target.value })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div><label className="text-[13px] font-extrabold">5️⃣ Crédit photo</label><input value={form.credit} onChange={(e) => setForm({ ...form, credit: e.target.value })} placeholder="© AEPHAT / Nom" className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">6️⃣ Tags (séparés par virgule)</label><input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="labo, congrès, lomé" className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">7️⃣ Lien au clic</label><input value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} placeholder="https://..." className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">8️⃣ Catégorie</label>
+                    <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as SiteImageCategory })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm">
+                      {CATS.map((c) => <option key={c.k} value={c.k}>{c.emoji} {c.fr}</option>)}
+                    </select>
+                  </div>
+                  <div><label className="text-[13px] font-extrabold">9️⃣ Publier le</label><input type="datetime-local" value={form.publishAt} onChange={(e) => setForm({ ...form, publishAt: e.target.value })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                  <div><label className="text-[13px] font-extrabold">🔟 Expirer le</label><input type="datetime-local" value={form.expireAt} onChange={(e) => setForm({ ...form, expireAt: e.target.value })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm" /></div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div><label className="text-[13px] font-extrabold">1️⃣1️⃣ Style</label>
+                    <select value={form.style} onChange={(e) => setForm({ ...form, style: e.target.value as typeof form.style })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm">
+                      <option value="rounded">Arrondi</option><option value="circle">Cercle</option><option value="square">Carré</option><option value="blob">Blob</option>
+                    </select>
+                  </div>
+                  <div><label className="text-[13px] font-extrabold">1️⃣2️⃣ Visibilité</label>
+                    <select value={form.visibility} onChange={(e) => setForm({ ...form, visibility: e.target.value as typeof form.visibility })} className="mt-1 w-full border rounded-xl px-3 py-2.5 text-sm">
+                      <option value="everyone">🌍 Tout le monde</option><option value="students_only">🔒 Étudiants uniquement</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[13px] font-extrabold">1️⃣3️⃣ Point focal : {form.focalX}% / {form.focalY}% • Overlay hero : {form.overlayOpacity}%</label>
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    <input type="range" min={0} max={100} value={form.focalX} onChange={(e) => setForm({ ...form, focalX: +e.target.value })} />
+                    <input type="range" min={0} max={100} value={form.focalY} onChange={(e) => setForm({ ...form, focalY: +e.target.value })} />
+                    <input type="range" min={0} max={90} value={form.overlayOpacity} onChange={(e) => setForm({ ...form, overlayOpacity: +e.target.value })} />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 text-[13px] font-bold">
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="w-4 h-4 accent-[#1A5632]" /> 1️⃣4️⃣ Active</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} className="w-4 h-4 accent-[#B8922E]" /> 1️⃣5️⃣ En avant ⭐</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={form.withShadow} onChange={(e) => setForm({ ...form, withShadow: e.target.checked })} className="w-4 h-4 accent-[#1A5632]" /> 1️⃣6️⃣ Ombre</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={form.withBorder} onChange={(e) => setForm({ ...form, withBorder: e.target.checked })} className="w-4 h-4 accent-[#1A5632]" /> 1️⃣7️⃣ Bordure</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={form.openInNewTab} onChange={(e) => setForm({ ...form, openInNewTab: e.target.checked })} className="w-4 h-4 accent-[#1A5632]" /> 1️⃣8️⃣ Nouvel onglet</label>
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" className="btn-primary flex-1 justify-center">{editing ? "💾 Enregistrer" : "➕ Ajouter l'image"}</button>
+                  <button type="button" onClick={() => setShowForm(false)} className="btn-ghost">{t.common.cancel}</button>
+                </div>
+              </div>
+              {/* Preview live */}
+              <div className="lg:sticky lg:top-0 self-start">
+                <p className="text-[13px] font-extrabold mb-2">1️⃣9️⃣ Aperçu en direct {imgMeta.w ? `• ${imgMeta.w}×${imgMeta.h}px • ${imgMeta.kb} Ko` : ""}</p>
+                <div className={`overflow-hidden bg-[#0B1F14] ${form.style === "circle" ? "rounded-full aspect-square" : form.style === "square" ? "rounded-lg" : form.style === "blob" ? "rounded-[40%_60%_60%_40%/50%] aspect-square" : "rounded-2xl"} ${form.withShadow ? "shadow-2xl" : ""} ${form.withBorder ? "border-4 border-white" : ""}`}>
+                  {form.url ? (
+                    <div className="relative h-64">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={form.url} alt="" className="w-full h-full object-cover" style={{ objectPosition: `${form.focalX}% ${form.focalY}%` }}
+                        onLoad={(e) => { const im = e.currentTarget; setImgMeta({ w: im.naturalWidth, h: im.naturalHeight, kb: imgMeta.kb }); }} onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
+                      <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(11,31,20,${form.overlayOpacity / 100}), transparent 65%)` }} />
+                      <div className="absolute bottom-3 left-3 right-3 text-white">
+                        <p className="font-extrabold text-[14px] truncate">{form.title || form.alt || "Titre..."}</p>
+                        <p className="text-[12px] text-white/70 truncate">{form.caption || "Légende..."}</p>
+                      </div>
+                    </div>
+                  ) : <div className="h-64 grid place-items-center text-white/40 text-sm">Aucune image</div>}
+                </div>
+                <div className="mt-3 rounded-2xl bg-[#F6F7F4] border border-[#E3E9E1] p-3 text-[12px]">
+                  <p className="font-extrabold">2️⃣0️⃣ Check-list qualité</p>
+                  <ul className="mt-1.5 grid gap-1 font-semibold text-[#5B6B5F]">
+                    <li>{form.alt.length > 5 ? "✅" : "⬜"} Alt FR renseigné</li>
+                    <li>{form.title ? "✅" : "⬜"} Titre affiché</li>
+                    <li>{form.caption ? "✅" : "⬜"} Légende</li>
+                    <li>{form.tags.trim() ? "✅" : "⬜"} Tags</li>
+                    <li>{form.credit ? "✅" : "⬜"} Crédit</li>
+                  </ul>
+                </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div className="fixed inset-0 z-[90] bg-black/85 backdrop-blur p-4 grid place-items-center" onClick={() => setLightbox(null)}>
+          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lightbox.url} alt={lightbox.alt} className="w-full max-h-[75vh] object-contain rounded-2xl" />
+            <div className="glass rounded-2xl mt-3 p-4 flex flex-wrap items-center justify-between gap-3">
+              <div><p className="font-extrabold text-[14px]">{lightbox.title || lightbox.alt}</p><p className="text-[12px] text-[#5B6B5F]">{lightbox.caption} {lightbox.credit && `• © ${lightbox.credit}`}</p></div>
+              <div className="flex gap-2">
+                <button onClick={() => { openEdit(lightbox); setLightbox(null); }} className="btn-primary !py-2 text-[13px]">✏️ Modifier</button>
+                <button onClick={() => setLightbox(null)} className="btn-ghost !py-2 text-[13px]">Fermer</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -17,9 +17,29 @@ export async function POST(request: Request) {
     altEn: body.altEn || "",
     title: body.title || "",
     titleEn: body.titleEn || "",
+    caption: body.caption || "",
+    captionEn: body.captionEn || "",
+    credit: body.credit || "",
+    linkUrl: body.linkUrl || "",
+    openInNewTab: body.openInNewTab ?? true,
+    tags: body.tags || [],
     category: body.category || "general",
     order: body.order ?? (data.siteImages?.length || 0) + 1,
     isActive: body.isActive ?? true,
+    isFeatured: body.isFeatured ?? false,
+    visibility: body.visibility || "everyone",
+    publishAt: body.publishAt || undefined,
+    expireAt: body.expireAt || undefined,
+    style: body.style || "rounded",
+    withShadow: body.withShadow ?? true,
+    withBorder: body.withBorder ?? false,
+    focalX: body.focalX ?? 50,
+    focalY: body.focalY ?? 50,
+    overlayOpacity: body.overlayOpacity ?? 45,
+    width: body.width || undefined,
+    height: body.height || undefined,
+    fileSizeKb: body.fileSizeKb || undefined,
+    source: body.source || "url",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -45,10 +65,12 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  const ids = searchParams.get("ids");
+  if (!id && !ids) return NextResponse.json({ error: "id required" }, { status: 400 });
   const data = getData();
   if (!data.siteImages) data.siteImages = [];
-  data.siteImages = data.siteImages.filter((img) => img.id !== id);
+  const toDelete = ids ? ids.split(",") : [id as string];
+  data.siteImages = data.siteImages.filter((img) => !toDelete.includes(img.id));
   saveData(data);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, deleted: toDelete.length });
 }

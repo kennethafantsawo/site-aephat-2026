@@ -1,8 +1,8 @@
 {
   "nav": {
     "home": "Accueil",
-    "vieAephat": "Actualités & Sondages",
-    "sante": "Santé & Sources (OMS / VIDAL)",
+    "vieAephat": "Actualités AEPHAT",
+    "sante": "Santé",
     "about": "Le Bureau & À propos",
     "login": "Se connecter",
     "register": "S'inscrire",
@@ -23,13 +23,13 @@
     "statsSatisfaction": "Engagement Associatif"
   },
   "vieAephat": {
-    "title": "Vie de l'AEPHAT",
-    "description": "Actualités, événements et projets de l'association.",
+    "title": "Actualités AEPHAT",
+    "description": "Le fil social de l'association : annonces, événements, projets — likez, commentez, partagez.",
     "empty": "Aucune publication pour le moment."
   },
   "sante": {
-    "title": "Santé & Sources Officielles",
-    "description": "Informations continues actualisées depuis les flux officiels de l'OMS et du VIDAL.",
+    "title": "Santé",
+    "description": "Veille santé OMS & VIDAL : alertes, prévention, médicaments, vaccination.",
     "lastUpdate": "Dernière mise à jour",
     "empty": "Aucune information santé disponible."
   },

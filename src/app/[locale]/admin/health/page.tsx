@@ -10,71 +10,128 @@ export default function AdminHealthPage() {
   const locale: Locale = (pathname.split("/")[1] as Locale) || "fr";
   const t = getDictionary(locale);
   const [items, setItems] = useState<HealthSource[]>([]);
+  const [catalog, setCatalog] = useState<{ title: string; url: string; sourceName: string; summary: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [importing, setImporting] = useState(false);
+  const [busy, setBusy] = useState("");
+  const [url, setUrl] = useState("");
+  const [preview, setPreview] = useState<{ title: string; summary: string; imageUrl?: string; sourceUrl: string; sourceName: string } | null>(null);
 
-  useEffect(() => { fetch("/api/health").then((r) => r.json()).then((h) => { setItems(h); setLoading(false); }); }, []);
+  const reload = () => fetch("/api/health").then((r) => r.json()).then((h) => { setItems(h); setLoading(false); });
+  useEffect(() => {
+    reload();
+    fetch("/api/health?catalog=1").then((r) => r.json()).then(setCatalog).catch(() => {});
+  }, []);
 
-  const handleImport = async () => {
-    setImporting(true);
-    const res = await fetch("/api/health", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "import_feeds", importedBy: "u1" }) });
-    if (res.ok) {
-      const { imported } = await res.json();
-      const updated = await fetch("/api/health").then((r) => r.json());
-      setItems(updated);
-      alert(imported > 0 ? `${imported} article(s) importé(s)` : "Aucun nouvel article");
-    }
-    setImporting(false);
+  const run = async (body: object, key: string) => {
+    setBusy(key);
+    const res = await fetch("/api/health", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    setBusy("");
+    await reload();
+    return data;
   };
 
-  const handleApprove = async (item: HealthSource) => {
-    const res = await fetch("/api/health", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "approve", id: item.id }) });
-    if (res.ok) setItems((prev) => prev.map((h) => h.id === item.id ? { ...h, isApproved: true } : h));
+  const importFeeds = async () => {
+    const d = await run({ action: "import_feeds", importedBy: "u1" }, "rss");
+    alert(d.imported > 0 ? `✅ ${d.imported} article(s) RSS importé(s)` : "Aucun nouvel article RSS");
   };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ?")) return;
-    const res = await fetch("/api/health", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete", id }) });
-    if (res.ok) setItems((prev) => prev.filter((h) => h.id !== id));
+  const importCatalog = async () => {
+    const d = await run({ action: "import_catalog", importedBy: "u1" }, "catalog");
+    alert(d.imported > 0 ? `✅ ${d.imported} fiche(s) OMS/VIDAL importée(s)` : "Catalogue déjà importé");
   };
+  const scrape = async () => {
+    if (!url.trim()) return;
+    setBusy("scrape");
+    const res = await fetch("/api/health", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "scrape_url", url }) });
+    const d = await res.json();
+    setBusy("");
+    if (d.ok) setPreview(d.preview);
+    else alert(d.error || "Échec du scraping");
+  };
+  const savePreview = async (approved: boolean) => {
+    if (!preview) return;
+    await run({ action: "create", title: preview.title, summary: preview.summary, imageUrl: preview.imageUrl, sourceUrl: preview.sourceUrl, sourceName: preview.sourceName, sourceType: preview.sourceName.includes("VIDAL") ? "VIDAL" : "OMS", category: "prevention", importMode: "scrape", isApproved: approved }, "save");
+    setPreview(null); setUrl("");
+  };
+  const approve = (id: string) => run({ action: "approve", id }, `ok-${id}`);
+  const del = async (id: string) => { if (confirm("Supprimer ?")) run({ action: "delete", id }, `del-${id}`); };
 
-  if (loading) return <p className="text-gray-500">{t.common.loading}</p>;
+  if (loading) return <p className="text-sm text-gray-500">{t.common.loading}</p>;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t.admin.health}</h1>
-        <button onClick={handleImport} disabled={importing} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
-          {importing ? t.admin.importing : t.admin.importFeeds}
-        </button>
+    <div className="max-w-6xl mx-auto grid gap-5">
+      <div className="card-soft overflow-hidden">
+        <div className="mesh-bg grain p-6">
+          <h1 className="font-display text-white text-2xl font-extrabold">🛡️ {locale === "fr" ? "Veille Santé OMS & VIDAL" : "WHO & VIDAL watch"}</h1>
+          <p className="text-white/60 text-[13px] mt-1">{items.length} fiches • {items.filter((i) => i.isApproved).length} publiées • {items.filter((i) => !i.isApproved).length} en attente</p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            <button onClick={importFeeds} disabled={!!busy} className="btn-gold text-[13px] !py-2.5">{busy === "rss" ? "⏳ RSS..." : "📡 Importer flux RSS"}</button>
+            <button onClick={importCatalog} disabled={!!busy} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-[13px] !py-2.5">{busy === "catalog" ? "⏳ Catalogue..." : "📚 Importer catalogue OMS/VIDAL"}</button>
+          </div>
+        </div>
+        <div className="p-4 border-t border-[#E3E9E1] grid md:grid-cols-[1fr_auto] gap-2">
+          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="🔗 Coller une URL OMS ou VIDAL à scraper... (ex: https://www.who.int/fr/...)" className="bg-[#F6F7F4] border border-[#E3E9E1] rounded-full px-4 py-2.5 text-sm outline-none focus:border-[#1A5632]" />
+          <button onClick={scrape} disabled={busy === "scrape"} className="btn-primary !py-2.5 text-[13px]">{busy === "scrape" ? "⏳ Scraping..." : "🔍 Scraper l'URL"}</button>
+        </div>
+        {preview && (
+          <div className="m-4 rounded-2xl border border-[#D4A843] bg-[#FFFBEB] p-4">
+            <p className="text-[12px] font-extrabold text-[#8a6d1b] uppercase tracking-widest">Aperçu du scraping — {preview.sourceName}</p>
+            <h3 className="font-extrabold mt-1">{preview.title}</h3>
+            <p className="text-[13px] text-[#5B6B5F] mt-1">{preview.summary}</p>
+            <p className="text-[12px] text-[#5B6B5F] mt-1 truncate">{preview.sourceUrl}</p>
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => savePreview(true)} className="btn-primary !py-2 text-[13px]">✅ Enregistrer & publier</button>
+              <button onClick={() => savePreview(false)} className="btn-ghost !py-2 text-[13px]">📥 Brouillon (à valider)</button>
+              <button onClick={() => setPreview(null)} className="text-[13px] font-bold text-[#5B6B5F]">Annuler</button>
+            </div>
+          </div>
+        )}
       </div>
-      <div className="bg-white rounded-lg border border-border overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-border">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Titre</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Source</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Statut</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {items.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{locale === "en" && item.titleEn ? item.titleEn : item.title}</td>
-                <td className="px-4 py-3"><span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">{item.sourceName}</span></td>
-                <td className="px-4 py-3 text-gray-500">{new Date(item.publishedDate).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US")}</td>
-                <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.isApproved ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{item.isApproved ? t.admin.posted : t.admin.pendingReview}</span></td>
-                <td className="px-4 py-3 text-right space-x-2">
-                  {!item.isApproved && <button onClick={() => handleApprove(item)} className="text-green-600 hover:underline text-xs font-medium">{t.admin.approve}</button>}
-                  <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs font-medium">Source</a>
-                  <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:underline text-xs font-medium">{t.admin.deletePost}</button>
-                </td>
+
+      <div className="card-soft p-4">
+        <h2 className="font-display font-extrabold text-[15px]">📚 Catalogue officiel (1 clic)</h2>
+        <div className="grid sm:grid-cols-2 gap-2 mt-3">
+          {catalog.map((c) => (
+            <div key={c.url} className="rounded-2xl border border-[#E3E9E1] bg-[#F6F7F4] p-3 flex gap-2 items-start">
+              <span className={`text-[11px] font-extrabold rounded-full px-2 py-1 shrink-0 ${c.sourceName.includes("VIDAL") ? "bg-[#FFF3D6] text-[#8a6d1b]" : "bg-[#E3F2E8] text-[#0B4d26]"}`}>{c.sourceName}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-bold leading-snug">{c.title}</p>
+                <a href={c.url} target="_blank" rel="noreferrer" className="text-[12px] text-[#1A5632] font-bold hover:underline">Ouvrir ↗</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card-soft overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[#F6F7F4] border-b border-[#E3E9E1]">
+              <tr>
+                <th className="text-left px-4 py-3 font-extrabold text-[#5B6B5F] text-[12px]">Titre</th>
+                <th className="text-left px-4 py-3 font-extrabold text-[#5B6B5F] text-[12px]">Source</th>
+                <th className="text-left px-4 py-3 font-extrabold text-[#5B6B5F] text-[12px]">Mode</th>
+                <th className="text-left px-4 py-3 font-extrabold text-[#5B6B5F] text-[12px]">Statut</th>
+                <th className="text-right px-4 py-3 font-extrabold text-[#5B6B5F] text-[12px]">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-[#EFF2EC]">
+              {items.map((item) => (
+                <tr key={item.id} className="hover:bg-[#F6F7F4]/60">
+                  <td className="px-4 py-3 font-bold text-[#0B1F14] max-w-xs truncate">{item.title}</td>
+                  <td className="px-4 py-3"><span className="text-[11px] font-extrabold bg-[#EAF4ED] text-[#1A5632] rounded-full px-2.5 py-1">{item.sourceName}</span></td>
+                  <td className="px-4 py-3 text-[12px] text-[#5B6B5F] font-bold">{item.importMode || "—"}</td>
+                  <td className="px-4 py-3"><span className={`text-[11px] font-extrabold rounded-full px-2.5 py-1 ${item.isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{item.isApproved ? "● Publié" : "○ À valider"}</span></td>
+                  <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                    {!item.isApproved && <button onClick={() => approve(item.id)} className="text-[12px] font-extrabold text-green-700 hover:underline">Approuver</button>}
+                    <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="text-[12px] font-extrabold text-[#1A5632] hover:underline">Source</a>
+                    <button onClick={() => del(item.id)} className="text-[12px] font-extrabold text-red-600 hover:underline">Supprimer</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

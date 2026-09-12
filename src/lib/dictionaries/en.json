@@ -1,8 +1,8 @@
 {
   "nav": {
     "home": "Home",
-    "vieAephat": "News & Polls",
-    "sante": "Health & Sources (WHO / VIDAL)",
+    "vieAephat": "AEPHAT News",
+    "sante": "Health",
     "about": "The Board & About",
     "login": "Sign In",
     "register": "Register",
@@ -23,13 +23,13 @@
     "statsSatisfaction": "Community Engagement"
   },
   "vieAephat": {
-    "title": "AEPHAT Life",
-    "description": "News, events and projects from the association.",
+    "title": "AEPHAT News",
+    "description": "The association's social feed: announcements, events, projects — like, comment, share.",
     "empty": "No publications yet."
   },
   "sante": {
-    "title": "Health & Official Sources",
-    "description": "Continuous health intelligence from official WHO and VIDAL databases.",
+    "title": "Health",
+    "description": "WHO & VIDAL health watch: alerts, prevention, medicines, vaccination.",
     "lastUpdate": "Last updated",
     "empty": "No health information available."
   },
