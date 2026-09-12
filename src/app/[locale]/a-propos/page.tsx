@@ -84,7 +84,7 @@ export default function AProposPage() {
                   {member.imageUrl ? (
                     <img src={member.imageUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <img src={BRAND.logoPath} alt="" className="w-6 h-6" />
+                    <img src={BRAND.logo} alt="" className="w-6 h-6" />
                   )}
                 </div>
                 <h3 className="mt-3 font-semibold text-gray-900">{member.name}</h3>

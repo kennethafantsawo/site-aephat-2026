@@ -26,17 +26,22 @@ export function PostCard({ post, locale }: { post: Post; locale: string }) {
 
   return (
     <>
-      <article className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all duration-200">
+      <article className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 card-3d relative">
+        {/* Hover glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl pointer-events-none" />
+        
         {post.imageUrl && (
-          <div className="aspect-[16/10] overflow-hidden">
+          <div className="aspect-[16/10] overflow-hidden relative">
             <img
               src={post.imageUrl}
               alt=""
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         )}
-        <div className="p-5">
+        
+        <div className="p-5 relative z-10">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
               {locale === "fr" ? "Vie AEPHAT" : "AEPHAT Life"}
@@ -47,7 +52,7 @@ export function PostCard({ post, locale }: { post: Post; locale: string }) {
               </span>
             )}
             <span className="text-xs text-gray-300">•</span>
-            <time className="text-xs text-gray-400">
+            <time className="text-xs text-gray-500">
               {new Date(post.createdAt).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", {
                 day: "2-digit",
                 month: "short",
@@ -56,7 +61,7 @@ export function PostCard({ post, locale }: { post: Post; locale: string }) {
             </time>
           </div>
 
-          <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-2">
+          <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-primary transition-colors">
             {title}
           </h3>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed line-clamp-2">
@@ -66,14 +71,14 @@ export function PostCard({ post, locale }: { post: Post; locale: string }) {
           <div className="mt-4 flex items-center gap-3">
             <button
               onClick={handleLike}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 cursor-pointer ${
                 liked
-                  ? "bg-primary text-white border-primary"
-                  : "border-gray-200 text-gray-500 hover:border-primary hover:text-primary"
+                  ? "bg-primary text-white border-primary hover:bg-primary-dark"
+                  : "border-gray-200 text-gray-500 hover:border-primary hover:text-primary hover:shadow-md"
               }`}
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3.5 w-3.5 transition-transform group-active:scale-125"
                 fill={liked ? "currentColor" : "none"}
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -89,7 +94,7 @@ export function PostCard({ post, locale }: { post: Post; locale: string }) {
             </button>
             <button
               onClick={() => setShowComments(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:border-primary hover:text-primary transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:border-primary hover:text-primary hover:shadow-md transition-all duration-200 cursor-pointer"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path

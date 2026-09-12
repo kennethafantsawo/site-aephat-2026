@@ -11,7 +11,7 @@ export function Footer({ locale }: { locale: Locale }) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5 mb-4">
-              <img src={BRAND.logoPath} alt="AEPHAT" className="h-8 w-auto brightness-0 invert" />
+              <img src={BRAND.logo} alt="AEPHAT" className="h-8 w-auto brightness-0 invert" />
               <div>
                 <h3 className="text-base font-bold">AEPHAT</h3>
                 <p className="text-xs text-gray-400">Étudiants en Pharmacie du Togo</p>

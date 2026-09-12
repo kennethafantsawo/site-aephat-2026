@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-8">
-            <img src={BRAND.logoPath} alt="AEPHAT" className="h-12 w-auto mx-auto mb-4" />
+            <img src={BRAND.logo} alt="AEPHAT" className="h-12 w-auto mx-auto mb-4" />
             <h1 className="text-xl font-bold text-gray-900">{t.admin.title}</h1>
             <p className="text-sm text-gray-500 mt-1">
               {locale === "fr" ? "Connexion administrateur" : "Administrator login"}

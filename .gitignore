@@ -44,3 +44,6 @@ next-env.d.ts
 temp-project/
 cloudflared.exe
 package-lock.json
+
+# Local Netlify folder
+.netlify

@@ -48,7 +48,7 @@ export default function PartagerPage() {
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-lg mx-auto px-4 py-12 lg:py-20">
         <div className="text-center mb-8">
-          <img src={BRAND.logoPath} alt="AEPHAT" className="h-12 w-auto mx-auto mb-4" />
+           <img src={BRAND.logo} alt="AEPHAT" className="h-12 w-auto mx-auto mb-4" />
           <h1 className="text-2xl font-extrabold text-gray-900">
             {locale === "fr" ? "Partager le site" : "Share the site"}
           </h1>
@@ -62,7 +62,7 @@ export default function PartagerPage() {
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           {/* Link preview */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6 flex items-center gap-3">
-            <img src={BRAND.logoPath} alt="AEPHAT" className="h-10 w-auto" />
+             <img src={BRAND.logo} alt="AEPHAT" className="h-10 w-auto" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900">AEPHAT</p>
               <p className="text-xs text-gray-500 truncate">{siteUrl}</p>

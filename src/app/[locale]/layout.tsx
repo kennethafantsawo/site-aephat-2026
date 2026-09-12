@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ScrollProgress } from "@/components/ScrollProgress";
 import { isValidLocale, defaultLocale, type Locale } from "@/lib/i18n";
 
 export default async function LocaleLayout({
@@ -14,6 +15,7 @@ export default async function LocaleLayout({
 
   return (
     <div className="min-h-full flex flex-col">
+      <ScrollProgress />
       <Header locale={locale} />
       <main className="flex-1">{children}</main>
       <Footer locale={locale} />
