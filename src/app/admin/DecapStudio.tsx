@@ -41,11 +41,15 @@ export default function DecapStudio() {
       try {
         await loadScript(IDENTITY_SRC);
         await loadScript(DECAP_SRC);
-        // Habillage AEPHAT : feuille d'aperçu + gabarit aux couleurs du site.
+        // Habillage AEPHAT : feuille de style globale + preview.
         try {
           setupDecapCms();
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = "/admin/aephat-cms.css";
+          document.head.appendChild(link);
         } catch {
-          // L'aperçu reste celui par défaut si l'enregistrement échoue.
+          // L'habillage est optionnel : le CMS reste fonctionnel.
         }
         if (!cancelled) setStatus("ready");
       } catch {

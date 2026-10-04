@@ -1,0 +1,232 @@
+/* =====================================================================
+   AEPHAT CMS —habillage du studio Decap (shell + listes + éditeur).
+   Couleurs du logo : vert pharmacie, encre noire, fond clair.
+   Injecté via /admin/aephat-cms.css
+   ===================================================================== */
+
+:root {
+  --aephat-green: #1fa34a;
+  --aephat-green-dark: #0c6b2d;
+  --aephat-green-soft: #e9f7ee;
+  --aephat-ink: #101418;
+  --aephat-muted: #5a6570;
+  --aephat-bg: #f2f5f3;
+  --aephat-card: #ffffff;
+  --aephat-border: #e2e8e6;
+}
+
+/* Fond global du CMS */
+html,
+body {
+  background: var(--aephat-bg) !important;
+}
+
+body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+  color: var(--aephat-ink);
+}
+
+/* Bandeau marque AEPHAT au-dessus du shell */
+.cms-top-strip {
+  height: 4px;
+  background: linear-gradient(90deg, #1fa34a, #0c6b2d 60%, #101418);
+}
+
+/* ----------------------------------------------------------------
+   Barre supérieure / navigation
+----------------------------------------------------------------- */
+body > div > header,
+body [class*="header"],
+body [class*="Header"],
+body header {
+  background: linear-gradient(135deg, #0a2e18, #0c6b2d) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+}
+
+body [class*="header"] a,
+body header a {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+body [class*="header"] img,
+body header img {
+  border-radius: 12px;
+  background: #fff;
+  padding: 3px;
+}
+
+body [class*="header"] h1,
+body [class*="header"] h2,
+body header h1,
+body header h2,
+body [class*="brand"],
+body [class*="logo"] {
+  color: #fff !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+}
+
+/* Sélecteur de collection / liens nav */
+body nav a,
+body [class*="nav"] a,
+body [class*="Nav"] a {
+  border-radius: 999px !important;
+}
+
+body nav a:hover,
+body [class*="nav"] a:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+body nav a.active,
+body [class*="active"][class*="nav"],
+body [class*="Nav"] .active {
+  background: #1fa34a !important;
+  color: #fff !important;
+}
+
+/* ----------------------------------------------------------------
+   Contenu central (cartes, listes, médias)
+----------------------------------------------------------------- */
+body main,
+body [role="main"],
+body [class*="main"],
+body [class*="content"]:not(input):not(textarea) {
+  background: var(--aephat-bg);
+}
+
+body [class*="collection"],
+body [class*="card"],
+body section,
+body article,
+body li {
+  background-color: var(--aephat-card);
+}
+
+body [class*="card"],
+body [class*="editor"],
+body [class*="collection"] {
+  border: 1px solid var(--aephat-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 50px -36px rgba(10, 46, 24, 0.4) !important;
+}
+
+/* Titres / labels de section */
+body h1, body h2, body h3 {
+  color: var(--aephat-ink) !important;
+  letter-spacing: -0.015em;
+}
+
+body [class*="label"],
+body label {
+  color: var(--aephat-ink) !important;
+  font-weight: 700;
+}
+
+/* ----------------------------------------------------------------
+   Champs de formulaire
+----------------------------------------------------------------- */
+body input[type="text"],
+body input[type="email"],
+body input[type="url"],
+body input[type="number"],
+body input[type="datetime-local"],
+body textarea,
+body select {
+  background: #fff !important;
+  border: 1px solid var(--aephat-border) !important;
+  border-radius: 12px !important;
+  color: var(--aephat-ink) !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+body input:focus,
+body textarea:focus,
+body select:focus {
+  border-color: var(--aephat-green) !important;
+  box-shadow: 0 0 0 3px rgba(31, 163, 74, 0.18) !important;
+  outline: none !important;
+}
+
+/* ----------------------------------------------------------------
+   Boutons
+----------------------------------------------------------------- */
+body button {
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+body button:hover {
+  transform: translateY(-1px);
+}
+
+/* Boutons principaux (action « Save », « Publish », etc.) */
+body [class*="primary"],
+body [class*="Primary"],
+body [class*="publish"],
+body [class*="Publish"],
+body button[class*="action"],
+body [class*="toolbar"] button:first-child {
+  background: linear-gradient(135deg, #1fa34a, #0c6b2d) !important;
+  border: 0 !important;
+  color: #fff !important;
+  box-shadow: 0 12px 26px -14px rgba(12, 107, 45, 0.7) !important;
+}
+
+body [class*="primary"]:hover,
+body [class*="Publish"]:hover,
+body [class*="toolbar"] button:first-child:hover {
+  filter: brightness(1.06);
+}
+
+/* Liens actifs / boutons secondaires */
+body a[class*="active"],
+body [class*="active"] {
+  color: var(--aephat-green-dark) !important;
+}
+
+/* Badges / pastilles */
+body [class*="badge"],
+body [class*="chip"],
+body [class*="tag"] {
+  background: var(--aephat-green-soft) !important;
+  color: var(--aephat-green-dark) !important;
+  border: 1px solid rgba(31, 163, 74, 0.25) !important;
+  border-radius: 999px !important;
+}
+
+/* Pastille « published » */
+body [class*="status"],
+body [class*="label"][class*="published"] {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 800 !important;
+}
+
+/* Scrollbar intérieure */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #e7ede9;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#1fa34a, #0c6b2d);
+  border-radius: 999px;
+}
+
+/* Bandeau fin en haut de la colonne centrale */
+body::before {
+  content: "AEPHAT — Studio de contenu";
+  display: block;
+  height: 28px;
+  background: #101418;
+  color: #e9f7ee;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 8px 24px 0;
+}
