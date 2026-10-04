@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { type Locale, getDictionary } from "@/lib/i18n";
 import type { BureauMember } from "@/modules/content/types";
+import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
+import { isContentReadOnly } from "@/lib/site";
 
 export default function AdminBureauPage() {
   const pathname = usePathname();
@@ -13,6 +15,7 @@ export default function AdminBureauPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<BureauMember | null>(null);
   const [loading, setLoading] = useState(true);
+  const readOnly = isContentReadOnly();
 
   useEffect(() => { fetch("/api/bureau").then((r) => r.json()).then((m) => { setMembers(m); setLoading(false); }); }, []);
 
@@ -38,11 +41,14 @@ export default function AdminBureauPage() {
 
   return (
     <div>
+      <ReadOnlyBanner />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t.admin.bureau}</h1>
-        <button onClick={() => { setEditing(emptyMember); setShowForm(true); }} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">{t.admin.addMember}</button>
+        {!readOnly && (
+          <button onClick={() => { setEditing(emptyMember); setShowForm(true); }} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">{t.admin.addMember}</button>
+        )}
       </div>
-      {showForm && editing && <BureauForm member={editing} locale={locale} onSave={handleSave} onCancel={() => { setShowForm(false); setEditing(null); }} />}
+      {!readOnly && showForm && editing && <BureauForm member={editing} locale={locale} onSave={handleSave} onCancel={() => { setShowForm(false); setEditing(null); }} />}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {members.map((member) => (
           <div key={member.id} className="bg-white rounded-lg border border-border p-5">
@@ -54,8 +60,14 @@ export default function AdminBureauPage() {
                 {member.phone && <p className="text-sm text-gray-500">{member.phone}</p>}
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { setEditing(member); setShowForm(true); }} className="text-primary text-xs hover:underline">{t.admin.editMember}</button>
-                <button onClick={() => handleDelete(member.id)} className="text-red-600 text-xs hover:underline">{t.admin.deleteMember}</button>
+                {readOnly ? (
+                  <span className="text-xs text-gray-400">Lecture seule</span>
+                ) : (
+                  <>
+                    <button onClick={() => { setEditing(member); setShowForm(true); }} className="text-primary text-xs hover:underline">{t.admin.editMember}</button>
+                    <button onClick={() => handleDelete(member.id)} className="text-red-600 text-xs hover:underline">{t.admin.deleteMember}</button>
+                  </>
+                )}
               </div>
             </div>
           </div>

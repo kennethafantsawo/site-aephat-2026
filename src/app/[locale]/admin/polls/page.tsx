@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { type Locale, getDictionary } from "@/lib/i18n";
 import type { Poll } from "@/modules/polls/types";
+import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
+import { isContentReadOnly } from "@/lib/site";
 
 export default function AdminPollsPage() {
   const pathname = usePathname();
@@ -13,6 +15,7 @@ export default function AdminPollsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
+  const readOnly = isContentReadOnly();
 
   useEffect(() => { fetch("/api/polls").then((r) => r.json()).then((p) => { setPolls(p); setLoading(false); }); }, []);
 
@@ -38,11 +41,14 @@ export default function AdminPollsPage() {
 
   return (
     <div>
+      <ReadOnlyBanner />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t.admin.polls}</h1>
-        <button onClick={() => { setEditing(emptyPoll); setShowForm(true); }} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">{locale === "fr" ? "Nouveau sondage" : "New poll"}</button>
+        {!readOnly && (
+          <button onClick={() => { setEditing(emptyPoll); setShowForm(true); }} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">{locale === "fr" ? "Nouveau sondage" : "New poll"}</button>
+        )}
       </div>
-      {showForm && editing && <PollForm poll={editing} locale={locale} onSave={handleSave} onCancel={() => { setShowForm(false); setEditing(null); }} />}
+      {!readOnly && showForm && editing && <PollForm poll={editing} locale={locale} onSave={handleSave} onCancel={() => { setShowForm(false); setEditing(null); }} />}
       <div className="bg-white rounded-lg border border-border overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-border">
@@ -61,8 +67,14 @@ export default function AdminPollsPage() {
                 <td className="px-4 py-3 text-gray-500 text-xs">{poll.resultsEmail || "-"}</td>
                 <td className="px-4 py-3 text-right space-x-2">
                   <a href={poll.googleFormUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs font-medium">{t.admin.viewResults}</a>
-                  <button onClick={() => { setEditing(poll); setShowForm(true); }} className="text-gray-600 hover:underline text-xs font-medium">{t.admin.editPost}</button>
-                  <button onClick={() => handleDelete(poll.id)} className="text-red-600 hover:underline text-xs font-medium">{t.admin.deletePost}</button>
+                  {readOnly ? (
+                    <span className="text-xs text-gray-400">Lecture seule</span>
+                  ) : (
+                    <>
+                      <button onClick={() => { setEditing(poll); setShowForm(true); }} className="text-gray-600 hover:underline text-xs font-medium">{t.admin.editPost}</button>
+                      <button onClick={() => handleDelete(poll.id)} className="text-red-600 hover:underline text-xs font-medium">{t.admin.deletePost}</button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

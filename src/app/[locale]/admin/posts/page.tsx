@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { type Locale, getDictionary } from "@/lib/i18n";
 import type { Post } from "@/modules/content/types";
 import type { Poll } from "@/modules/polls/types";
+import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
+import { isContentReadOnly } from "@/lib/site";
 
 export default function AdminPostsPage() {
   const pathname = usePathname();
@@ -15,6 +17,7 @@ export default function AdminPostsPage() {
   const [editing, setEditing] = useState<Post | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const readOnly = isContentReadOnly();
 
   useEffect(() => {
     Promise.all([
@@ -54,12 +57,15 @@ export default function AdminPostsPage() {
 
   return (
     <div>
+      <ReadOnlyBanner />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t.admin.posts}</h1>
-        <button onClick={() => { setEditing(emptyPost); setShowForm(true); }} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">{t.admin.newPost}</button>
+        {!readOnly && (
+          <button onClick={() => { setEditing(emptyPost); setShowForm(true); }} className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">{t.admin.newPost}</button>
+        )}
       </div>
 
-      {showForm && editing && (
+      {!readOnly && showForm && editing && (
         <PostForm post={editing} polls={polls} locale={locale} onSave={handleSave} onCancel={() => { setShowForm(false); setEditing(null); }} />
       )}
 
@@ -87,9 +93,15 @@ export default function AdminPostsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{new Date(post.createdAt).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US")}</td>
                   <td className="px-4 py-3 text-right space-x-2">
-                    <button onClick={() => { setEditing(post); setShowForm(true); }} className="text-primary hover:underline text-xs font-medium">{t.admin.editPost}</button>
-                    {post.status !== "published" && <button onClick={() => handlePublishNow(post)} className="text-green-600 hover:underline text-xs font-medium">{t.admin.publishNow}</button>}
-                    <button onClick={() => handleDelete(post.id)} className="text-red-600 hover:underline text-xs font-medium">{t.admin.deletePost}</button>
+                    {readOnly ? (
+                      <span className="text-xs text-gray-400">Lecture seule</span>
+                    ) : (
+                      <>
+                        <button onClick={() => { setEditing(post); setShowForm(true); }} className="text-primary hover:underline text-xs font-medium">{t.admin.editPost}</button>
+                        {post.status !== "published" && <button onClick={() => handlePublishNow(post)} className="text-green-600 hover:underline text-xs font-medium">{t.admin.publishNow}</button>}
+                        <button onClick={() => handleDelete(post.id)} className="text-red-600 hover:underline text-xs font-medium">{t.admin.deletePost}</button>
+                      </>
+                    )}
                   </td>
                 </tr>
               );

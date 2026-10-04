@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import type { SiteImage, SiteImageCategory } from "@/modules/content/types";
+import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
+import { isContentReadOnly } from "@/lib/site";
 
 const CATS: { k: SiteImageCategory; fr: string; en: string }[] = [
   { k: "hero", fr: "Carousel hero", en: "Hero carousel" },
@@ -88,6 +90,7 @@ export default function AdminImagesPage() {
   const [history, setHistory] = useState<string[]>([]);
   const [imgMeta, setImgMeta] = useState<{ w?: number; h?: number; kb?: number }>({});
   const fileRef = useRef<HTMLInputElement>(null);
+  const readOnly = isContentReadOnly();
 
   const reload = () => fetch("/api/site-images").then((r) => r.json()).then((d) => { setImages(d); setLoading(false); });
   useEffect(() => { reload(); }, []);
@@ -114,8 +117,9 @@ export default function AdminImagesPage() {
 
   const totalKb = images.reduce((s, i) => s + (i.fileSizeKb || 120), 0);
 
-  const openAdd = () => { setEditing(null); setForm(emptyForm); setImgMeta({}); setShowForm(true); };
+  const openAdd = () => { if (readOnly) return; setEditing(null); setForm(emptyForm); setImgMeta({}); setShowForm(true); };
   const openEdit = (img: SiteImage) => {
+    if (readOnly) return;
     setEditing(img);
     setForm({
       url: img.url, alt: img.alt, altEn: img.altEn || "", title: img.title || "", titleEn: img.titleEn || "",
@@ -241,6 +245,7 @@ export default function AdminImagesPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      <ReadOnlyBanner />
       <div className="card-soft overflow-hidden mb-5">
         <div className="mesh-bg grain p-6 flex flex-wrap gap-4 items-center justify-between">
           <div>
@@ -249,8 +254,12 @@ export default function AdminImagesPage() {
             <p className="text-white/60 text-[13px] mt-1">{images.length} images · {(totalKb / 1024).toFixed(1)} Mo · {images.filter((i) => i.isFeatured).length} en avant</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={openAdd} className="btn-primary !bg-none !bg-white !text-[#0A2E18] !shadow-none text-sm"><Plus className="w-4 h-4" /> Ajouter</button>
-            <button onClick={() => fileRef.current?.click()} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-sm"><Upload className="w-4 h-4" /> Importer</button>
+            {!readOnly && (
+              <>
+                <button onClick={openAdd} className="btn-primary !bg-none !bg-white !text-[#0A2E18] !shadow-none text-sm"><Plus className="w-4 h-4" /> Ajouter</button>
+                <button onClick={() => fileRef.current?.click()} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-sm"><Upload className="w-4 h-4" /> Importer</button>
+              </>
+            )}
             <button onClick={exportJSON} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-sm"><Download className="w-4 h-4" /> Exporter</button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
           </div>
@@ -308,8 +317,10 @@ export default function AdminImagesPage() {
             </div>
           </div>
           <div className="flex gap-2 items-center">
-            <label className="text-[12px] font-bold text-[#5A6570] cursor-pointer hover:text-[#0C6B2D]">Importer JSON <input type="file" accept=".json" className="hidden" onChange={(e) => e.target.files?.[0] && importJSON(e.target.files[0])} /></label>
-            {selected.length > 0 && (
+            {!readOnly && (
+              <label className="text-[12px] font-bold text-[#5A6570] cursor-pointer hover:text-[#0C6B2D]">Importer JSON <input type="file" accept=".json" className="hidden" onChange={(e) => e.target.files?.[0] && importJSON(e.target.files[0])} /></label>
+            )}
+            {!readOnly && selected.length > 0 && (
               <span className="flex gap-1.5">
                 <button onClick={() => bulk("activate")} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-green-100 text-green-800 rounded-full px-3 py-1.5"><Play className="w-3 h-3" /> {selected.length}</button>
                 <button onClick={() => bulk("deactivate")} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-gray-100 rounded-full px-3 py-1.5"><Pause className="w-3 h-3" /></button>
@@ -319,10 +330,12 @@ export default function AdminImagesPage() {
             )}
           </div>
         </div>
-        <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
-          className={`mx-4 mb-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 text-center py-4 text-[13px] font-bold transition-all ${dragOver ? "border-[#1FA34A] bg-green-50 text-[#0C6B2D]" : "border-[#E2E8E6] text-[#5A6570]"}`}>
-          <ImagePlus className="w-4 h-4" /> Glisser-déposer une image ici pour l'ajouter instantanément
-        </div>
+        {!readOnly && (
+          <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
+            className={`mx-4 mb-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 text-center py-4 text-[13px] font-bold transition-all ${dragOver ? "border-[#1FA34A] bg-green-50 text-[#0C6B2D]" : "border-[#E2E8E6] text-[#5A6570]"}`}>
+            <ImagePlus className="w-4 h-4" /> Glisser-déposer une image ici pour l'ajouter instantanément
+          </div>
+        )}
       </div>
 
       {view === "grid" ? (
@@ -339,19 +352,25 @@ export default function AdminImagesPage() {
                     {!img.isActive && <span className="text-[11px] font-extrabold bg-black/60 text-white rounded-full px-2.5 py-1">Inactive</span>}
                     <span className="text-[11px] font-extrabold bg-black/60 text-white rounded-full px-2.5 py-1">SEO {seo.score}</span>
                   </div>
-                  <input type="checkbox" checked={selected.includes(img.id)} onChange={() => setSelected((s) => (s.includes(img.id) ? s.filter((x) => x !== img.id) : [...s, img.id]))} onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 w-5 h-5 accent-[#1FA34A]" />
+                  {!readOnly && (
+                    <input type="checkbox" checked={selected.includes(img.id)} onChange={() => setSelected((s) => (s.includes(img.id) ? s.filter((x) => x !== img.id) : [...s, img.id]))} onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 w-5 h-5 accent-[#1FA34A]" />
+                  )}
                 </div>
                 <div className="p-4">
                   <p className="font-extrabold text-[14px] truncate">{img.title || img.alt}</p>
                   <p className="text-[12px] text-[#5A6570] truncate">{CATS.find((c) => c.k === img.category)?.fr} · N°{img.order} · {(img.tags || []).slice(0, 3).join(", ")}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    <button onClick={() => openEdit(img)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-3 py-1.5 hover:bg-[#101418] hover:text-white transition-all"><Pencil className="w-3 h-3" /> Modifier</button>
-                    <button onClick={() => toggle(img)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-3 py-1.5" aria-label="Activer/pause">{img.isActive ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}</button>
-                    <button onClick={() => duplicate(img)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-3 py-1.5" aria-label="Dupliquer"><Copy className="w-3 h-3" /></button>
-                    <button onClick={() => move(img, "up")} className="p-1.5 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-2.5" aria-label="Monter"><ChevronUp className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => move(img, "down")} className="p-1.5 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-2.5" aria-label="Descendre"><ChevronDown className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => remove(img.id)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-red-50 text-red-600 rounded-full px-3 py-1.5" aria-label="Supprimer"><Trash2 className="w-3 h-3" /></button>
-                  </div>
+                  {readOnly ? (
+                    <p className="text-[12px] text-gray-400 mt-3">Lecture seule — modifications via le CMS</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      <button onClick={() => openEdit(img)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-3 py-1.5 hover:bg-[#101418] hover:text-white transition-all"><Pencil className="w-3 h-3" /> Modifier</button>
+                      <button onClick={() => toggle(img)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-3 py-1.5" aria-label="Activer/pause">{img.isActive ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}</button>
+                      <button onClick={() => duplicate(img)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-3 py-1.5" aria-label="Dupliquer"><Copy className="w-3 h-3" /></button>
+                      <button onClick={() => move(img, "up")} className="p-1.5 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-2.5" aria-label="Monter"><ChevronUp className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => move(img, "down")} className="p-1.5 text-[12px] font-extrabold bg-[#EFF3F1] rounded-full px-2.5" aria-label="Descendre"><ChevronDown className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => remove(img.id)} className="inline-flex items-center gap-1 text-[12px] font-extrabold bg-red-50 text-red-600 rounded-full px-3 py-1.5" aria-label="Supprimer"><Trash2 className="w-3 h-3" /></button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -361,16 +380,22 @@ export default function AdminImagesPage() {
         <div className="grid gap-2.5">
           {filtered.map((img) => (
             <div key={img.id} className="card-soft p-3 flex items-center gap-3">
-              <input type="checkbox" checked={selected.includes(img.id)} onChange={() => setSelected((s) => (s.includes(img.id) ? s.filter((x) => x !== img.id) : [...s, img.id]))} className="w-5 h-5 accent-[#1FA34A]" />
+              {!readOnly && (
+                <input type="checkbox" checked={selected.includes(img.id)} onChange={() => setSelected((s) => (s.includes(img.id) ? s.filter((x) => x !== img.id) : [...s, img.id]))} className="w-5 h-5 accent-[#1FA34A]" />
+              )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.url} alt="" className="w-20 h-14 rounded-xl object-cover cursor-pointer" onClick={() => setLightbox(img)} />
               <div className="min-w-0 flex-1">
                 <p className="font-extrabold text-[13.5px] truncate">{img.title || img.alt}</p>
                 <p className="text-[12px] text-[#5A6570] truncate">{img.category} · N°{img.order} · {img.isActive ? "Active" : "Inactive"} · SEO {seoScore(img).score}</p>
               </div>
-              <button onClick={() => openEdit(img)} className="p-2 bg-[#EFF3F1] rounded-full" aria-label="Modifier"><Pencil className="w-3.5 h-3.5" /></button>
-              <button onClick={() => duplicate(img)} className="p-2 bg-[#EFF3F1] rounded-full" aria-label="Dupliquer"><Copy className="w-3.5 h-3.5" /></button>
-              <button onClick={() => remove(img.id)} className="p-2 bg-red-50 text-red-600 rounded-full" aria-label="Supprimer"><Trash2 className="w-3.5 h-3.5" /></button>
+              {!readOnly && (
+                <>
+                  <button onClick={() => openEdit(img)} className="p-2 bg-[#EFF3F1] rounded-full" aria-label="Modifier"><Pencil className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => duplicate(img)} className="p-2 bg-[#EFF3F1] rounded-full" aria-label="Dupliquer"><Copy className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => remove(img.id)} className="p-2 bg-red-50 text-red-600 rounded-full" aria-label="Supprimer"><Trash2 className="w-3.5 h-3.5" /></button>
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -381,7 +406,7 @@ export default function AdminImagesPage() {
         <ul className="mt-2 text-[12.5px] text-[#5A6570] grid gap-1">{history.length === 0 ? <li>—</li> : history.map((h, i) => <li key={i}>· {h}</li>)}</ul>
       </div>
 
-      {showForm && (
+      {!readOnly && showForm && (
         <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto" onClick={() => setShowForm(false)}>
           <div className="bg-white rounded-3xl max-w-4xl mx-auto overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="mesh-bg grain p-5 flex items-center justify-between">
@@ -491,7 +516,9 @@ export default function AdminImagesPage() {
             <div className="glass rounded-2xl mt-3 p-4 flex flex-wrap items-center justify-between gap-3">
               <div><p className="font-extrabold text-[14px]">{lightbox.title || lightbox.alt}</p><p className="text-[12px] text-[#5A6570]">{lightbox.caption} {lightbox.credit && `· © ${lightbox.credit}`}</p></div>
               <div className="flex gap-2">
-                <button onClick={() => { openEdit(lightbox); setLightbox(null); }} className="btn-primary !py-2 text-[13px]"><Pencil className="w-3.5 h-3.5" /> Modifier</button>
+                {!readOnly && (
+                  <button onClick={() => { openEdit(lightbox); setLightbox(null); }} className="btn-primary !py-2 text-[13px]"><Pencil className="w-3.5 h-3.5" /> Modifier</button>
+                )}
                 <button onClick={() => setLightbox(null)} className="btn-ghost !py-2 text-[13px]">Fermer</button>
               </div>
             </div>

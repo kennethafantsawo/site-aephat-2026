@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { type Locale, getDictionary } from "@/lib/i18n";
 import type { HealthSource } from "@/modules/content/types";
+import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
+import { isContentReadOnly } from "@/lib/site";
 
 export default function AdminHealthPage() {
   const pathname = usePathname();
@@ -15,6 +17,7 @@ export default function AdminHealthPage() {
   const [busy, setBusy] = useState("");
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState<{ title: string; summary: string; imageUrl?: string; sourceUrl: string; sourceName: string } | null>(null);
+  const readOnly = isContentReadOnly();
 
   const reload = () => fetch("/api/health").then((r) => r.json()).then((h) => { setItems(h); setLoading(false); });
   useEffect(() => {
@@ -60,19 +63,26 @@ export default function AdminHealthPage() {
 
   return (
     <div className="max-w-6xl mx-auto grid gap-5">
+      <ReadOnlyBanner />
       <div className="card-soft overflow-hidden">
         <div className="mesh-bg grain p-6">
           <h1 className="font-display text-white text-2xl font-extrabold">{locale === "fr" ? "Veille Santé OMS et VIDAL" : "WHO and VIDAL watch"}</h1>
           <p className="text-white/60 text-[13px] mt-1">{items.length} fiches · {items.filter((i) => i.isApproved).length} publiées · {items.filter((i) => !i.isApproved).length} en attente</p>
-          <div className="flex flex-wrap gap-2 mt-4">
-            <button onClick={importFeeds} disabled={!!busy} className="btn-gold text-[13px] !py-2.5">{busy === "rss" ? "Import RSS..." : "Importer flux RSS"}</button>
-            <button onClick={importCatalog} disabled={!!busy} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-[13px] !py-2.5">{busy === "catalog" ? "Import catalogue..." : "Importer catalogue OMS/VIDAL"}</button>
+          {!readOnly && (
+            <>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <button onClick={importFeeds} disabled={!!busy} className="btn-gold text-[13px] !py-2.5">{busy === "rss" ? "Import RSS..." : "Importer flux RSS"}</button>
+                <button onClick={importCatalog} disabled={!!busy} className="btn-ghost !bg-white/10 !text-white !border-white/25 text-[13px] !py-2.5">{busy === "catalog" ? "Import catalogue..." : "Importer catalogue OMS/VIDAL"}</button>
+              </div>
+            </>
+          )}
+        </div>
+        {!readOnly && (
+          <div className="p-4 border-t border-[#E3E9E1] grid md:grid-cols-[1fr_auto] gap-2">
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Coller une URL OMS ou VIDAL à analyser... (ex : https://www.who.int/fr/...)" className="bg-[#F6F7F4] border border-[#E3E9E1] rounded-full px-4 py-2.5 text-sm outline-none focus:border-[#1A5632]" />
+            <button onClick={scrape} disabled={busy === "scrape"} className="btn-primary !py-2.5 text-[13px]">{busy === "scrape" ? "Analyse..." : "Analyser l'URL"}</button>
           </div>
-        </div>
-        <div className="p-4 border-t border-[#E3E9E1] grid md:grid-cols-[1fr_auto] gap-2">
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Coller une URL OMS ou VIDAL à analyser... (ex : https://www.who.int/fr/...)" className="bg-[#F6F7F4] border border-[#E3E9E1] rounded-full px-4 py-2.5 text-sm outline-none focus:border-[#1A5632]" />
-          <button onClick={scrape} disabled={busy === "scrape"} className="btn-primary !py-2.5 text-[13px]">{busy === "scrape" ? "Analyse..." : "Analyser l'URL"}</button>
-        </div>
+        )}
         {preview && (
           <div className="m-4 rounded-2xl border border-[#D4A843] bg-[#FFFBEB] p-4">
             <p className="text-[12px] font-extrabold text-[#8a6d1b] uppercase tracking-widest">Aperçu du scraping — {preview.sourceName}</p>
@@ -123,9 +133,15 @@ export default function AdminHealthPage() {
                   <td className="px-4 py-3 text-[12px] text-[#5B6B5F] font-bold">{item.importMode || "—"}</td>
                   <td className="px-4 py-3"><span className={`text-[11px] font-extrabold rounded-full px-2.5 py-1 ${item.isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{item.isApproved ? "● Publié" : "○ À valider"}</span></td>
                   <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                    {!item.isApproved && <button onClick={() => approve(item.id)} className="text-[12px] font-extrabold text-green-700 hover:underline">Approuver</button>}
                     <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="text-[12px] font-extrabold text-[#1A5632] hover:underline">Source</a>
-                    <button onClick={() => del(item.id)} className="text-[12px] font-extrabold text-red-600 hover:underline">Supprimer</button>
+                    {readOnly ? (
+                      <span className="text-[12px] text-gray-400">Lecture seule</span>
+                    ) : (
+                      <>
+                        {!item.isApproved && <button onClick={() => approve(item.id)} className="text-[12px] font-extrabold text-green-700 hover:underline">Approuver</button>}
+                        <button onClick={() => del(item.id)} className="text-[12px] font-extrabold text-red-600 hover:underline">Supprimer</button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

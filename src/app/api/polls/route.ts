@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getData, saveData, generateId } from "@/lib/store";
+import { isContentReadOnly, READ_ONLY_ERROR } from "@/lib/site";
 
 export async function GET() {
   const data = getData();
@@ -7,6 +8,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (isContentReadOnly()) {
+    return NextResponse.json({ error: READ_ONLY_ERROR }, { status: 403 });
+  }
   const body = await request.json();
   const data = getData();
   const newPoll = {
@@ -31,6 +35,9 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  if (isContentReadOnly()) {
+    return NextResponse.json({ error: READ_ONLY_ERROR }, { status: 403 });
+  }
   const data = getData();
   data.polls = data.polls.filter((p) => p.id !== id);
   saveData(data);

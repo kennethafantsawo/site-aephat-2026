@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getData, saveData, generateId } from "@/lib/store";
+import { isContentReadOnly, READ_ONLY_ERROR } from "@/lib/site";
 import type { HealthSourceName, HealthCategory } from "@/modules/content/types";
 
 const RSS_FEEDS = [
@@ -66,6 +67,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (isContentReadOnly()) {
+    return NextResponse.json({ error: READ_ONLY_ERROR }, { status: 403 });
+  }
   const body = await request.json();
   const data = getData();
 

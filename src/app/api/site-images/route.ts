@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getData, saveData, generateId } from "@/lib/store";
+import { isContentReadOnly, READ_ONLY_ERROR } from "@/lib/site";
 import type { SiteImage } from "@/modules/content/types";
 
 export async function GET() {
@@ -8,6 +9,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (isContentReadOnly()) {
+    return NextResponse.json({ error: READ_ONLY_ERROR }, { status: 403 });
+  }
   const body = await request.json();
   const data = getData();
   const newImage: SiteImage = {
@@ -50,6 +54,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  if (isContentReadOnly()) {
+    return NextResponse.json({ error: READ_ONLY_ERROR }, { status: 403 });
+  }
   const body = await request.json();
   const { id, ...updates } = body;
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -63,6 +70,9 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (isContentReadOnly()) {
+    return NextResponse.json({ error: READ_ONLY_ERROR }, { status: 403 });
+  }
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const ids = searchParams.get("ids");

@@ -163,15 +163,6 @@
   ],
   "comments": [
     {
-      "id": "c_1788696865879_ivm3c",
-      "postId": "p1",
-      "authorName": "Test User",
-      "authorEmail": "test@test.com",
-      "content": "Great post!",
-      "isApproved": false,
-      "createdAt": "2026-09-06T12:14:25.879Z"
-    },
-    {
       "id": "c1",
       "postId": "p1",
       "authorName": "Marie K.",
@@ -235,6 +226,52 @@
       "email": "tresorerie@aephat.tg",
       "phone": "+228 94 56 78 90",
       "order": 5
+    }
+  ],
+  "siteImages": [
+    {
+      "id": "si1",
+      "url": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&h=900&fit=crop",
+      "alt": "Étudiants en pharmacie au laboratoire",
+      "altEn": "Pharmacy students in laboratory",
+      "category": "hero",
+      "order": 1,
+      "isActive": true,
+      "createdAt": "2026-09-01T10:00:00Z",
+      "updatedAt": "2026-09-01T10:00:00Z"
+    },
+    {
+      "id": "si2",
+      "url": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1600&h=900&fit=crop",
+      "alt": "Médicaments et produits pharmaceutiques",
+      "altEn": "Medicines and pharmaceutical products",
+      "category": "hero",
+      "order": 2,
+      "isActive": true,
+      "createdAt": "2026-09-01T10:00:00Z",
+      "updatedAt": "2026-09-01T10:00:00Z"
+    },
+    {
+      "id": "si3",
+      "url": "https://images.unsplash.com/photo-1585435557343-3b092031a831?w=1600&h=900&fit=crop",
+      "alt": "Recherche pharmaceutique",
+      "altEn": "Pharmaceutical research",
+      "category": "hero",
+      "order": 3,
+      "isActive": true,
+      "createdAt": "2026-09-01T10:00:00Z",
+      "updatedAt": "2026-09-01T10:00:00Z"
+    },
+    {
+      "id": "si4",
+      "url": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1600&h=900&fit=crop",
+      "alt": "Sciences de la santé",
+      "altEn": "Health sciences",
+      "category": "hero",
+      "order": 4,
+      "isActive": true,
+      "createdAt": "2026-09-01T10:00:00Z",
+      "updatedAt": "2026-09-01T10:00:00Z"
     }
   ]
 }
