@@ -57,8 +57,12 @@ collections:
     label: "Contenu du site"
     files:
       - name: donnees
-        label: "Données (tout le contenu)"
+        label: "Données — contenu complet du site"
         file: src/lib/data-store.json
+        description: "Chaque bloc ci-dessous correspond à une partie du site. Clique pour déplier une section, éditer, puis publier."
+        create: false
+        editor:
+          preview: false
         fields:
 
           # ------------------------- PUBLICATIONS -------------------------
@@ -66,7 +70,10 @@ collections:
             name: posts
             widget: list
             label_singular: "Publication"
-            summary: "{{title}} ({{status}})"
+            summary: "{{title}} — {{status}}"
+            collapsed: true
+            minimize_collapsed: true
+            hint: "Les articles publiés apparaissent dans la page Actualités AEPHAT."
             fields:
               - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour un article existant"}
               - {label: "Titre (FR)", name: title, widget: string}
@@ -128,7 +135,10 @@ collections:
             name: health
             widget: list
             label_singular: "Fiche santé"
-            summary: "{{title}}"
+            summary: "{{title}} — {{sourceName}}"
+            collapsed: true
+            minimize_collapsed: true
+            hint: "Les fiches approuvées s'affichent sur la page Santé."
             fields:
               - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour une fiche existante"}
               - {label: "Titre (FR)", name: title, widget: string}
@@ -183,6 +193,9 @@ collections:
             widget: list
             label_singular: "Membre du bureau"
             summary: "{{name}} — {{role}}"
+            collapsed: true
+            minimize_collapsed: true
+            hint: "Ces responsables s'affichent dans la page Le Bureau."
             fields:
               - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour un membre existant"}
               - {label: "Nom complet", name: name, widget: string}
@@ -211,7 +224,10 @@ collections:
             name: siteImages
             widget: list
             label_singular: "Image"
-            summary: "{{alt}}"
+            summary: "{{alt}} — {{category}}"
+            collapsed: true
+            minimize_collapsed: true
+            hint: "Dépose tes images ici : elles alimentent le carrousel et les galeries."
             fields:
               - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour une image existante"}
               - {label: "Fichier image", name: url, widget: image}
@@ -287,6 +303,9 @@ collections:
             widget: list
             label_singular: "Sondage"
             summary: "{{title}}"
+            collapsed: true
+            minimize_collapsed: true
+            hint: "Chaque sondage pointe vers un Google Forms partagé."
             fields:
               - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour un sondage existant"}
               - {label: "Titre (FR)", name: title, widget: string}
@@ -312,7 +331,10 @@ collections:
             name: users
             widget: list
             label_singular: "Membre"
-            summary: "{{name}} ({{status}})"
+            summary: "{{name}} — {{status}}"
+            collapsed: true
+            minimize_collapsed: true
+            hint: "Validation des inscriptions étudiantes et gestion des suspensions."
             fields:
               - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier"}
               - {label: "Nom complet", name: name, widget: string}
@@ -354,7 +376,10 @@ collections:
             name: comments
             widget: list
             label_singular: "Commentaire"
-            summary: "{{authorName}}"
+            summary: "{{authorName}} — {{isApproved}}"
+            collapsed: true
+            minimize_collapsed: true
+            hint: "Seuls les commentaires approuvés sont visibles sur le site."
             fields:
               - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier"}
               - {label: "ID de la publication", name: postId, widget: string}
