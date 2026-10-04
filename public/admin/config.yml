@@ -1,0 +1,365 @@
+# =====================================================================
+# Decap CMS (anciennement Netlify CMS) — configuration AEPHAT
+# ---------------------------------------------------------------------
+# Ce fichier est chargé automatiquement par la page /admin
+# (voir app/admin/DecapStudio.tsx).
+#
+# Contenu géré : le fichier src/lib/data-store.json (posts, santé,
+# bureau, images, sondages, membres, commentaires). Chaque sauvegarde
+# crée un commit GitHub sur main puis Netlify reconstruit le site.
+#
+# AUTHENTIFICATION (obligatoire pour écrire sur GitHub) — 2 options :
+#
+# Option A — Git Gateway + Netlify Identity (recommandée sur Netlify) :
+#   1. Dashboard Netlify du site : Identity > Enable Identity,
+#      puis Identity > Services > Git Gateway > Enable.
+#   2. Identity > Invite users : invite l'adresse e-mail de l'admin.
+#   3. Remplace le bloc `backend` ci-dessous par :
+#        backend:
+#          name: git-gateway
+#          branch: main
+#
+# Option B — GitHub direct (ce fichier tel quel) :
+#   1. Crée une GitHub OAuth App : https://github.com/settings/developers
+#      Homepage URL : https://aephat.netlify.app
+#      Authorization callback URL : https://TON-PROXY/callback
+#   2. Déploie un mini proxy OAuth (ex. decap-github-proxy) avec le
+#      Client ID et le Client Secret, puis décommente :
+#        base_url: https://TON-PROXY
+#        auth_endpoint: /auth
+#
+# ÉDITION LOCALE (développement) : `npx decap-server` puis ouvrir /admin.
+# =====================================================================
+
+backend:
+  name: github
+  repo: kennethafantsawo/site-aephat-2026
+  branch: main
+  # base_url: https://TON-PROXY-OAUTH.exemple.com
+  # auth_endpoint: /auth
+
+# Édition locale via `npx decap-server` (sans effet en production)
+local_backend: true
+
+# Interface en français
+locale: fr
+
+# Liens affichés dans le CMS
+display_url: https://aephat.netlify.app
+logo_url: /brand/aez.png
+
+# Médias : stockés dans le dépôt, servis depuis /uploads/...
+media_folder: public/uploads
+public_folder: /uploads
+
+collections:
+  - name: site
+    label: "Contenu du site"
+    files:
+      - name: donnees
+        label: "Données (tout le contenu)"
+        file: src/lib/data-store.json
+        fields:
+
+          # ------------------------- PUBLICATIONS -------------------------
+          - label: "Publications (fil Actualités AEPHAT)"
+            name: posts
+            widget: list
+            label_singular: "Publication"
+            summary: "{{title}} ({{status}})"
+            fields:
+              - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour un article existant"}
+              - {label: "Titre (FR)", name: title, widget: string}
+              - {label: "Titre (EN)", name: titleEn, widget: string, required: false}
+              - {label: "Résumé (FR)", name: excerpt, widget: text}
+              - {label: "Résumé (EN)", name: excerptEn, widget: text, required: false}
+              - {label: "Contenu (FR)", name: content, widget: markdown}
+              - {label: "Contenu (EN)", name: contentEn, widget: markdown, required: false}
+              - {label: "Image de couverture", name: imageUrl, widget: image, required: false}
+              - {label: "Galerie (URLs séparées par des virgules)", name: images, widget: list, required: false}
+              - {label: "Nom de l'auteur", name: authorName, widget: string}
+              - {label: "Avatar de l'auteur", name: authorAvatar, widget: image, required: false}
+              - {label: "Pseudo auteur", name: authorHandle, widget: string, required: false}
+              - {label: "Auteur vérifié", name: isVerifiedAuthor, widget: boolean, default: true}
+              - {label: "Lieu", name: location, widget: string, required: false}
+              - label: "Statut"
+                name: status
+                widget: select
+                default: "draft"
+                options:
+                  - {label: "Brouillon", value: "draft"}
+                  - {label: "Publié", value: "published"}
+                  - {label: "Archivé", value: "archived"}
+                  - {label: "Programmé", value: "scheduled"}
+              - {label: "ID auteur interne", name: authorId, widget: string}
+              - label: "Catégorie"
+                name: category
+                widget: select
+                required: false
+                options:
+                  - {label: "Événement", value: "evenement"}
+                  - {label: "Académique", value: "academique"}
+                  - {label: "Humanitaire", value: "humanitaire"}
+                  - {label: "Vie étudiante", value: "vie_etudiante"}
+              - {label: "Étiquettes (séparées par des virgules)", name: tags, widget: list, required: false}
+              - label: "Visibilité"
+                name: visibility
+                widget: select
+                default: "everyone"
+                options:
+                  - {label: "Tout le monde", value: "everyone"}
+                  - {label: "Étudiants uniquement", value: "students_only"}
+              - {label: "Article de démonstration", name: isDemo, widget: boolean, default: false}
+              - {label: "Épinglé en tête", name: isPinned, widget: boolean, default: false}
+              - {label: "Sponsorisé", name: isSponsored, widget: boolean, default: false}
+              - {label: "Date programmée", name: scheduledAt, widget: datetime, required: false}
+              - {label: "Mentions J'aime", name: likes, widget: number, default: 0}
+              - {label: "Reposts", name: reposts, widget: number, default: 0, required: false}
+              - {label: "Partages", name: shares, widget: number, default: 0, required: false}
+              - {label: "Signets", name: bookmarks, widget: number, default: 0, required: false}
+              - {label: "Vues", name: views, widget: number, default: 0, required: false}
+              - {label: "Nombre de commentaires", name: commentCount, widget: number, default: 0}
+              - {label: "ID sondage associé", name: pollId, widget: string, required: false}
+              - {label: "Créé le", name: createdAt, widget: datetime}
+              - {label: "Mis à jour le", name: updatedAt, widget: datetime}
+
+          # ------------------------- VEILLE SANTÉ -------------------------
+          - label: "Veille santé (OMS / VIDAL)"
+            name: health
+            widget: list
+            label_singular: "Fiche santé"
+            summary: "{{title}}"
+            fields:
+              - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour une fiche existante"}
+              - {label: "Titre (FR)", name: title, widget: string}
+              - {label: "Titre (EN)", name: titleEn, widget: string, required: false}
+              - {label: "Résumé (FR)", name: summary, widget: text}
+              - {label: "Résumé (EN)", name: summaryEn, widget: text, required: false}
+              - {label: "Contenu détaillé (FR)", name: content, widget: markdown, required: false}
+              - {label: "URL de la source officielle", name: sourceUrl, widget: string}
+              - {label: "Nom de la source", name: sourceName, widget: string}
+              - label: "Type de source"
+                name: sourceType
+                widget: select
+                options:
+                  - {label: "OMS", value: "OMS"}
+                  - {label: "VIDAL", value: "VIDAL"}
+                  - {label: "Ministère de la Santé (Togo)", value: "MINISTERE_TOGO"}
+                  - {label: "Africa CDC", value: "AFRICA_CDC"}
+              - label: "Catégorie"
+                name: category
+                widget: select
+                required: false
+                options:
+                  - {label: "Alerte", value: "alerte"}
+                  - {label: "Prévention", value: "prevention"}
+                  - {label: "Recherche", value: "recherche"}
+                  - {label: "Pharmacovigilance", value: "pharmacovigilance"}
+                  - {label: "Médicament", value: "medicament"}
+                  - {label: "Vaccination", value: "vaccination"}
+              - {label: "Image d'illustration", name: imageUrl, widget: image, required: false}
+              - {label: "Temps de lecture (minutes)", name: readTimeMinutes, widget: number, required: false}
+              - {label: "Date de publication source", name: publishedDate, widget: datetime}
+              - label: "Langue"
+                name: language
+                widget: select
+                options: ["fr", "en"]
+              - {label: "Importé par (ID)", name: importedBy, widget: string}
+              - label: "Mode d'import"
+                name: importMode
+                widget: select
+                required: false
+                options:
+                  - {label: "Flux RSS", value: "rss"}
+                  - {label: "Scraping", value: "scrape"}
+                  - {label: "Manuel", value: "manual"}
+                  - {label: "Catalogue", value: "catalog"}
+              - {label: "Approuvé (visible sur le site)", name: isApproved, widget: boolean, default: false}
+              - {label: "Créé le", name: createdAt, widget: datetime}
+
+          # ------------------------- BUREAU -------------------------
+          - label: "Bureau exécutif"
+            name: bureau
+            widget: list
+            label_singular: "Membre du bureau"
+            summary: "{{name}} — {{role}}"
+            fields:
+              - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour un membre existant"}
+              - {label: "Nom complet", name: name, widget: string}
+              - {label: "Poste (FR)", name: role, widget: string}
+              - {label: "Poste (EN)", name: roleEn, widget: string, required: false}
+              - label: "Pôle"
+                name: category
+                widget: select
+                required: false
+                options:
+                  - {label: "Exécutif", value: "executif"}
+                  - {label: "Scientifique", value: "scientifique"}
+                  - {label: "Communication", value: "communication"}
+                  - {label: "Pédagogique", value: "pedagogique"}
+                  - {label: "Général", value: "general"}
+              - {label: "E-mail", name: email, widget: string, required: false}
+              - {label: "Téléphone", name: phone, widget: string, required: false}
+              - {label: "WhatsApp", name: whatsapp, widget: string, required: false}
+              - {label: "Photo", name: imageUrl, widget: image, required: false}
+              - {label: "Biographie (FR)", name: bio, widget: text, required: false}
+              - {label: "Biographie (EN)", name: bioEn, widget: text, required: false}
+              - {label: "Ordre d'affichage", name: order, widget: number, default: 1}
+
+          # ------------------------- IMAGES DU SITE -------------------------
+          - label: "Images du site (carrousel, galeries...)"
+            name: siteImages
+            widget: list
+            label_singular: "Image"
+            summary: "{{alt}}"
+            fields:
+              - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour une image existante"}
+              - {label: "Fichier image", name: url, widget: image}
+              - {label: "Texte alternatif (FR)", name: alt, widget: string}
+              - {label: "Texte alternatif (EN)", name: altEn, widget: string, required: false}
+              - {label: "Titre (FR)", name: title, widget: string, required: false}
+              - {label: "Titre (EN)", name: titleEn, widget: string, required: false}
+              - {label: "Légende (FR)", name: caption, widget: string, required: false}
+              - {label: "Légende (EN)", name: captionEn, widget: string, required: false}
+              - {label: "Crédit photo", name: credit, widget: string, required: false}
+              - {label: "Lien au clic", name: linkUrl, widget: string, required: false}
+              - {label: "Ouvrir dans un nouvel onglet", name: openInNewTab, widget: boolean, default: true}
+              - {label: "Étiquettes (séparées par des virgules)", name: tags, widget: list, required: false}
+              - label: "Section d'affichage"
+                name: category
+                widget: select
+                options:
+                  - {label: "Carousel hero (accueil)", value: "hero"}
+                  - {label: "Bannières", value: "banner"}
+                  - {label: "Galerie", value: "gallery"}
+                  - {label: "Publications", value: "post"}
+                  - {label: "Événements", value: "event"}
+                  - {label: "Bureau", value: "bureau"}
+                  - {label: "Santé", value: "health"}
+                  - {label: "Partenaires", value: "partner"}
+                  - {label: "À propos", value: "about"}
+                  - {label: "Fonds", value: "background"}
+                  - {label: "Général", value: "general"}
+              - {label: "Ordre", name: order, widget: number, default: 1}
+              - {label: "Active", name: isActive, widget: boolean, default: true}
+              - {label: "Mise en avant", name: isFeatured, widget: boolean, default: false}
+              - label: "Visibilité"
+                name: visibility
+                widget: select
+                default: "everyone"
+                options:
+                  - {label: "Tout le monde", value: "everyone"}
+                  - {label: "Étudiants uniquement", value: "students_only"}
+              - {label: "Publier le", name: publishAt, widget: datetime, required: false}
+              - {label: "Expire le", name: expireAt, widget: datetime, required: false}
+              - label: "Style d'affichage"
+                name: style
+                widget: select
+                required: false
+                options:
+                  - {label: "Arrondi", value: "rounded"}
+                  - {label: "Cercle", value: "circle"}
+                  - {label: "Carré", value: "square"}
+                  - {label: "Organique", value: "blob"}
+              - {label: "Ombre portée", name: withShadow, widget: boolean, default: true}
+              - {label: "Bordure", name: withBorder, widget: boolean, default: false}
+              - {label: "Point focal X (0-100)", name: focalX, widget: number, required: false}
+              - {label: "Point focal Y (0-100)", name: focalY, widget: number, required: false}
+              - {label: "Voile hero (0-90)", name: overlayOpacity, widget: number, required: false}
+              - {label: "Largeur d'origine (px)", name: width, widget: number, required: false}
+              - {label: "Hauteur d'origine (px)", name: height, widget: number, required: false}
+              - {label: "Poids (Ko)", name: fileSizeKb, widget: number, required: false}
+              - label: "Source"
+                name: source
+                widget: select
+                required: false
+                options:
+                  - {label: "Import", value: "upload"}
+                  - {label: "URL", value: "url"}
+                  - {label: "Unsplash", value: "unsplash"}
+                  - {label: "Catalogue", value: "catalog"}
+              - {label: "Créée le", name: createdAt, widget: datetime}
+              - {label: "Mise à jour le", name: updatedAt, widget: datetime}
+
+          # ------------------------- SONDAGES -------------------------
+          - label: "Sondages (Google Forms)"
+            name: polls
+            widget: list
+            label_singular: "Sondage"
+            summary: "{{title}}"
+            fields:
+              - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier pour un sondage existant"}
+              - {label: "Titre (FR)", name: title, widget: string}
+              - {label: "Titre (EN)", name: titleEn, widget: string, required: false}
+              - {label: "Description (FR)", name: description, widget: text}
+              - {label: "Description (EN)", name: descriptionEn, widget: text, required: false}
+              - {label: "Lien Google Forms", name: googleFormUrl, widget: string}
+              - {label: "E-mail des résultats", name: resultsEmail, widget: string, required: false}
+              - label: "Éligibilité"
+                name: eligibility
+                widget: select
+                options:
+                  - {label: "Tous", value: "all"}
+                  - {label: "E-mail requis", value: "email_required"}
+                  - {label: "Vérifiés uniquement", value: "verified_only"}
+              - {label: "Actif", name: isActive, widget: boolean, default: true}
+              - {label: "Réponses enregistrées", name: responsesCount, widget: number, required: false}
+              - {label: "Créé par (ID)", name: createdBy, widget: string}
+              - {label: "Créé le", name: createdAt, widget: datetime}
+
+          # ------------------------- MEMBRES -------------------------
+          - label: "Membres"
+            name: users
+            widget: list
+            label_singular: "Membre"
+            summary: "{{name}} ({{status}})"
+            fields:
+              - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier"}
+              - {label: "Nom complet", name: name, widget: string}
+              - {label: "E-mail", name: email, widget: string}
+              - label: "Profil"
+                name: profileType
+                widget: select
+                options:
+                  - {label: "Étudiant en pharmacie", value: "student_pharma"}
+                  - {label: "Docteur en pharmacie", value: "doctor_pharma"}
+                  - {label: "Professionnel de santé", value: "health_pro"}
+                  - {label: "Citoyen", value: "citizen"}
+              - label: "Statut du compte"
+                name: status
+                widget: select
+                options:
+                  - {label: "En attente", value: "pending"}
+                  - {label: "Vérifié", value: "verified"}
+                  - {label: "Refusé", value: "refused"}
+                  - {label: "Suspendu", value: "suspended"}
+              - label: "Rôle admin"
+                name: role
+                widget: select
+                required: false
+                options:
+                  - {label: "Président", value: "president"}
+                  - {label: "Vice-président", value: "vice_president"}
+                  - {label: "Resp. média", value: "media_manager"}
+              - {label: "N° carte d'étudiant", name: facultyId, widget: string, required: false}
+              - {label: "Année d'étude", name: academicYear, widget: string, required: false}
+              - {label: "Photo carte d'étudiant (ne pas modifier)", name: studentCardPhoto, widget: string, required: false}
+              - {label: "Vérifié", name: isVerified, widget: boolean, required: false}
+              - {label: "Avatar", name: avatar, widget: image, required: false}
+              - {label: "Téléphone", name: phone, widget: string, required: false}
+              - {label: "Créé le", name: createdAt, widget: datetime}
+
+          # ------------------------- COMMENTAIRES -------------------------
+          - label: "Commentaires (modération)"
+            name: comments
+            widget: list
+            label_singular: "Commentaire"
+            summary: "{{authorName}}"
+            fields:
+              - {label: "Identifiant", name: id, widget: string, hint: "Ne pas modifier"}
+              - {label: "ID de la publication", name: postId, widget: string}
+              - {label: "Nom de l'auteur", name: authorName, widget: string}
+              - {label: "E-mail de l'auteur", name: authorEmail, widget: string}
+              - {label: "Contenu", name: content, widget: text}
+              - {label: "Approuvé (visible sur le site)", name: isApproved, widget: boolean, default: false}
+              - {label: "Créé le", name: createdAt, widget: datetime}

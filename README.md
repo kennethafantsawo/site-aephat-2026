@@ -29,6 +29,20 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Administration du contenu (Decap CMS)
+
+Le contenu du site (`src/lib/data-store.json`) est éditable sans coder via
+Decap CMS : ouvrir **`/admin`** dans le navigateur (ex :
+https://aephat.netlify.app/admin), se connecter, modifier, publier.
+Chaque publication crée un commit GitHub sur `main` et Netlify
+reconstruit le site automatiquement.
+
+Configuration : `public/admin/config.yml` (backend `github`, médias dans
+`public/uploads`). Authentification : Git Gateway + Netlify Identity
+(recommandé, voir commentaires en tête du fichier) ou GitHub OAuth App +
+proxy OAuth (`base_url` / `auth_endpoint`). Édition locale :
+`npx decap-server` puis ouvrir `/admin`.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
