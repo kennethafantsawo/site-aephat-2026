@@ -37,16 +37,14 @@ https://aephat.netlify.app/admin), se connecter, modifier, publier.
 Chaque publication crée un commit GitHub sur `main` et Netlify
 reconstruit le site automatiquement.
 
-Configuration : `public/admin/config.yml` (backend `github`, médias dans
-`public/uploads`). Habillage aux couleurs AEPHAT : écran de démarrage
-(`DecapStudio.tsx`), feuille d'aperçu `public/admin/preview.css` et gabarit
-d'aperçu `src/app/admin/cms-setup.tsx` (cartes comme sur le site), plus une
-feuille globale `public/admin/aephat-cms.css` qui repeint le shell du CMS
-(header, boutons, champs, badges) aux couleurs du logo.
-Authentification : Git Gateway + Netlify Identity (recommandé, voir
-commentaires en tête du fichier) ou GitHub OAuth App + proxy OAuth
-(`base_url` / `auth_endpoint`). Édition locale : `npx decap-server` puis
-ouvrir `/admin`.
+Configuration : `public/admin/config.yml` (backend **git-gateway** par
+défaut, médias dans `public/uploads`). Dans Netlify : activer Identity et
+Git Gateway, inviter un utilisateur, puis consulter `/admin`.
+Habillage aux couleurs AEPHAT : écran de démarrage (`DecapStudio.tsx`),
+feuille d’aperçu `public/admin/preview.css` et gabarit d’aperçu
+`src/app/admin/cms-setup.tsx` (cartes comme sur le site), plus une feuille
+globale `public/admin/aephat-cms.css` qui repeint le shell du CMS.
+Édition locale : `npx decap-server` puis ouvrir `/admin`.
 
 ## Deploy on Vercel
 

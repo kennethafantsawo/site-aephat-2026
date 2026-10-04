@@ -10,33 +10,33 @@
 #
 # AUTHENTIFICATION (obligatoire pour écrire sur GitHub) — 2 options :
 #
-# Option A — Git Gateway + Netlify Identity (recommandée sur Netlify) :
+# Option A — Git Gateway + Netlify Identity (ACTUELLE) :
 #   1. Dashboard Netlify du site : Identity > Enable Identity,
 #      puis Identity > Services > Git Gateway > Enable.
 #   2. Identity > Invite users : invite l'adresse e-mail de l'admin.
-#   3. Remplace le bloc `backend` ci-dessous par :
-#        backend:
-#          name: git-gateway
-#          branch: main
+#   3. Redéploye le site après cette publication.
 #
-# Option B — GitHub direct (ce fichier tel quel) :
+# Option B — GitHub direct (moins simple) :
 #   1. Crée une GitHub OAuth App : https://github.com/settings/developers
 #      Homepage URL : https://aephat.netlify.app
 #      Authorization callback URL : https://TON-PROXY/callback
 #   2. Déploie un mini proxy OAuth (ex. decap-github-proxy) avec le
-#      Client ID et le Client Secret, puis décommente :
-#        base_url: https://TON-PROXY
-#        auth_endpoint: /auth
+#      Client ID et le Client Secret, puis remplace le bloc backend par :
+#        backend:
+#          name: github
+#          repo: kennethafantsawo/site-aephat-2026
+#          branch: main
+#          base_url: https://TON-PROXY
+#          auth_endpoint: /auth
 #
 # ÉDITION LOCALE (développement) : `npx decap-server` puis ouvrir /admin.
 # =====================================================================
 
 backend:
-  name: github
-  repo: kennethafantsawo/site-aephat-2026
+  name: git-gateway
   branch: main
-  # base_url: https://TON-PROXY-OAUTH.exemple.com
-  # auth_endpoint: /auth
+  # Option B (si vous n'utilisez pas Netlify) : remplacez par un backend
+  # GitHub + proxy OAuth : voir commentaire en tête du fichier.
 
 # Édition locale via `npx decap-server` (sans effet en production)
 local_backend: true
