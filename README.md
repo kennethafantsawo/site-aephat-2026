@@ -38,10 +38,13 @@ Chaque publication crée un commit GitHub sur `main` et Netlify
 reconstruit le site automatiquement.
 
 Configuration : `public/admin/config.yml` (backend `github`, médias dans
-`public/uploads`). Authentification : Git Gateway + Netlify Identity
-(recommandé, voir commentaires en tête du fichier) ou GitHub OAuth App +
-proxy OAuth (`base_url` / `auth_endpoint`). Édition locale :
-`npx decap-server` puis ouvrir `/admin`.
+`public/uploads`). Habillage aux couleurs AEPHAT : écran de démarrage
+(`DecapStudio.tsx`), feuille d'aperçu `public/admin/preview.css` et gabarit
+d'aperçu `src/app/admin/cms-setup.tsx` (cartes comme sur le site).
+Authentification : Git Gateway + Netlify Identity (recommandé, voir
+commentaires en tête du fichier) ou GitHub OAuth App + proxy OAuth
+(`base_url` / `auth_endpoint`). Édition locale : `npx decap-server` puis
+ouvrir `/admin`.
 
 ## Deploy on Vercel
 

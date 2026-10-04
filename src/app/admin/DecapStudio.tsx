@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { setupDecapCms } from "./cms-setup";
 
 const IDENTITY_SRC = "https://identity.netlify.com/v1/netlify-identity-widget.js";
 const DECAP_SRC = "https://unpkg.com/decap-cms@3/dist/decap-cms.js";
@@ -40,6 +41,12 @@ export default function DecapStudio() {
       try {
         await loadScript(IDENTITY_SRC);
         await loadScript(DECAP_SRC);
+        // Habillage AEPHAT : feuille d'aperçu + gabarit aux couleurs du site.
+        try {
+          setupDecapCms();
+        } catch {
+          // L'aperçu reste celui par défaut si l'enregistrement échoue.
+        }
         if (!cancelled) setStatus("ready");
       } catch {
         if (!cancelled) setStatus("error");
@@ -73,10 +80,13 @@ export default function DecapStudio() {
 
   if (status === "loading") {
     return (
-      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui, sans-serif" }}>
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontWeight: 800, fontSize: 18 }}>AEPHAT — Administration du contenu</p>
-          <p style={{ marginTop: 8, color: "#5A6570", fontSize: 14 }}>Chargement de Decap CMS…</p>
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "Inter, system-ui, sans-serif", background: "linear-gradient(160deg, #071a10 0%, #0A2E18 55%, #0C6B2D 100%)" }}>
+        <style>{`@keyframes aephat-spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ textAlign: "center", padding: 24 }}>
+          <img src="/brand/aez.png" alt="AEPHAT" style={{ width: 72, height: 72, objectFit: "contain", margin: "0 auto", background: "#fff", borderRadius: 18, padding: 6 }} />
+          <p style={{ fontWeight: 800, fontSize: 20, color: "#fff", marginTop: 16 }}>AEPHAT</p>
+          <p style={{ color: "rgba(255,255,255,.65)", fontSize: 13, marginTop: 4 }}>Administration du contenu — Lomé, Togo</p>
+          <div style={{ width: 36, height: 36, margin: "20px auto 0", borderRadius: "50%", border: "3px solid rgba(255,255,255,.2)", borderTopColor: "#5AC878", animation: "aephat-spin 0.9s linear infinite" }} />
         </div>
       </main>
     );
